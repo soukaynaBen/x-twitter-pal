@@ -1,70 +1,56 @@
-import type { OperationName } from "~factory/enum";
-
-export function getQueryIdRegex(operationName : OperationName) : RegExp {
-     
-     return new RegExp(`queryId: "(.+)",[\s\n]*operationName: "${operationName}"`)
-}
+import { sendToBackground } from "@plasmohq/messaging";
+import { pathBuilder } from "~factory";
+import type { OperationName, REQUEST_METHOD } from "~factory/enum";
+import {store} from "~redux/store"
 
 
 
-
-const savedFrames = [];
 const ADDITIONAL_RANDOM_NUMBER = 3;
 const DEFAULT_KEYWORD = "obfiowerehiring";
 let defaultRowIndex = null;
 let defaultKeyBytesIndices = null;
- 
- 
- 
-generateTID()
- 
- 
-async function generateTID() {
+let documentElement : HTMLElement
+
+export async function generateTID(operationName: OperationName, queryId: string, method: REQUEST_METHOD) {
+
+    const { response } = await sendToBackground({name: "home"})
+  documentElement = new DOMParser().parseFromString(response, "text/html").documentElement
+  const nodes = documentElement.querySelectorAll('[id^="loading-x-anim"]');
+
+    const serialized = Array.from(nodes).map(node => node.outerHTML);
+    localStorage.setItem("savedFrames", JSON.stringify(serialized));
+
+
   if (!defaultRowIndex || !defaultKeyBytesIndices) {
     const { firstIndex, remainingIndices } = await getIndices();
     defaultRowIndex = firstIndex;
     defaultKeyBytesIndices = remainingIndices;
   }
  
-  const method = "GET"
-  const path = fetchApiURL()
+  const path = fetchApiURL(operationName, queryId)
   const key = await getKey();
   const keyBytes = getKeyBytes(key);
   const animationKey = getAnimationKey(keyBytes);
+  console.log({path, key,keyBytes,animationKey})
   const xTID = await getTransactionID(method, path, key, keyBytes, animationKey)
   console.log("Generated Transaction ID: ", xTID)
+  return  xTID
 }
  
- 
-function fetchApiURL() { // This can be made dynamic using message passing
- return "/i/api/graphql/xd_EMdYvB9hfZsZ6Idri0w/TweetDetail"
+
+function fetchApiURL(operationName: OperationName, queryId: string) { // This can be made dynamic using message passing
+    if(queryId) return pathBuilder(operationName,queryId)
+    
+    return null
 }
- 
-const getFramesInterval = setInterval(() => {
-  const nodes = document.querySelectorAll('[id^="loading-x-anim"]');
- 
-  if (nodes.length === 0 && savedFrames.length !== 0) {
-    clearInterval(getFramesInterval);
-    const serialized = savedFrames.map(node => node.outerHTML);
-    localStorage.setItem("savedFrames", JSON.stringify(serialized));
-    return;
-  }
- 
-  nodes.forEach(removedNode => {
-    if (!savedFrames.includes(removedNode)) {
-      savedFrames.push(removedNode);
-    }
-  });
-}, 10);
- 
  
 async function getIndices() {
   let url = null;
   const keyByteIndices = [];
   const regix1 = /([0-9a-f]+):"ondemand\.s"/
-  const match1 = document.documentElement.innerHTML.match(regix1);
+  const match1 = documentElement.innerHTML.match(regix1);
   const regix2 = new RegExp(`${parseInt(match1[1])}:"([0-9a-f]+)"`) 
-  const match2 =  document.documentElement.innerHTML.match(regix2)
+  const match2 =  documentElement.innerHTML.match(regix2)
   const targetFileMatch = match2;
   if (targetFileMatch) {
     const hexString = targetFileMatch[1];
@@ -74,7 +60,7 @@ async function getIndices() {
    }
  
   const INDICES_REGEX = /\(\w{1}\[(\d{1,2})\],\s*16\)/g;
- 
+
     try {
     const response = await fetch(url);
     if (!response.ok) {
@@ -105,7 +91,7 @@ async function getIndices() {
  
 async function getKey() {
   return new Promise(resolve => {
-    const meta = document.querySelector('meta[name="twitter-site-verification"]');
+    const meta = documentElement.querySelector('meta[name="twitter-site-verification"]');
     if (meta) resolve(meta.getAttribute("content"));
   });
 }
@@ -116,17 +102,18 @@ function getKeyBytes(key) {
  
 function getFrames() {
   const stored = localStorage.getItem("savedFrames");
+  console.log({stored})
   if (stored) {
     const frames = JSON.parse(stored);
     const parser = new DOMParser();
  
-    return frames.map(frame =>
-      parser.parseFromString(frame, "text/html").body.firstChild
-    );
+      return frames.map(frame =>
+        parser.parseFromString(frame, "text/html").body.firstChild
+      );
   }
   return [];
 }
- 
+
 function get2DArray(keyBytes) {
   const frames = getFrames();
   const array = Array.from(
@@ -196,18 +183,14 @@ function getAnimationKey(keyBytes) {
   if (typeof defaultRowIndex === "undefined" || typeof defaultKeyBytesIndices === "undefined") {
     throw new Error("Indices not initialized");
   }
- 
   const rowIndex = keyBytes[defaultRowIndex] % 16;
- 
   const frameTime = defaultKeyBytesIndices.reduce((acc, index) => {
     return acc * (keyBytes[index] % 16);
   }, 1);
- 
   const arr = get2DArray(keyBytes);
   if (!arr || !arr[rowIndex]) {
     throw new Error("Invalid frame data");
   }
- 
   const frameRow = arr[rowIndex];
   const targetTime = frameTime / totalTime;
   const animationKey = animate(frameRow, targetTime);
@@ -375,4 +358,49 @@ async function digestMessage(message){
   const hashBuffer = await window.crypto.subtle.digest("SHA-256", data)
   const hashArray = Array.from(new Uint8Array(hashBuffer))
     return hashArray.map(b => b.toString(16).padStart(2, "0")).join("")
+}
+
+  export  function getQueryId(OperationName: OperationName){
+    const state =   store.getState()
+    const queries : Record<OperationName, string> = JSON.parse(state.queries.ids)
+        return  queries[OperationName]
+
+  }
+
+
+
+export function fromEntriesToItems(entries : UserTimelineAddEntriesInstruction | LikesTimelineAddEntriesInstruction) {
+    const items = [];
+    const ids = [];
+    let cursor;
+    for (const entry of entries.entries) {
+
+        if (entry.content.entryType === "TimelineTimelineItem" && !entry.entryId.startsWith("promoted-")) {
+            if (!entry.content.itemContent.tweet_results?.result) continue;
+            items.push(entry.content);
+            if (entry.content.itemContent.tweet_results.result.legacy?.id_str) ids.push(entry.content.itemContent.tweet_results.result.legacy.id_str);
+            if (entry.content.itemContent.tweet_results.result.legacy?.id_str) ids.push(entry.content.itemContent.tweet_results.result.legacy?.id_str);
+        } else if (entry.content.entryType === "TimelineTimelineModule" && entry.content.displayType === "VerticalConversation")
+        {
+            entry.content.items.forEach((i) => {
+                if (i.item.itemContent.tweet_results?.result) {
+                    items.push(i.item);
+                    if (i.item.itemContent.tweet_results.result.legacy?.id_str){
+                        ids.push(i.item.itemContent.tweet_results.result.legacy?.id_str);
+                    }
+                    if (i.item.itemContent.tweet_results.result.legacy?.id_str)
+                    {
+                        ids.push(i.item.itemContent.tweet_results.result.legacy?.id_str);
+                    } 
+                }
+            });
+        }else if (entry.content.entryType === "TimelineTimelineCursor" && entry.entryId.startsWith("cursor-bottom")) {
+            cursor = entry.content.value;
+            return {
+                items,
+                ids,
+                cursor
+            };
+        }
+    }
 }

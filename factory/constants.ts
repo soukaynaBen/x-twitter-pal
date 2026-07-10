@@ -1,10 +1,4 @@
-import { CODES, OperationName } from "~factory/enum"
-
-export const USER_TWEETS_AND_REPLIES_PATH = `${CODES[OperationName.USER_TWEETS_AND_REPLIES]}/${OperationName.USER_TWEETS_AND_REPLIES}`
-export const LIKES_PATH = `${CODES[OperationName.LIKES]}/${OperationName.LIKES}`
-export const DELETE_TWEET_PATH = `${CODES[OperationName.DELETE_TWEET]}/${OperationName.DELETE_TWEET}`
-export const UNFAVORITE_TWEET_PATH = `${CODES[OperationName.UNFAVORITE_TWEET]}/${OperationName.UNFAVORITE_TWEET}`
-export const DELETE_RETWEET_PATH = `${CODES[OperationName.DELETE_RETWEET]}/${OperationName.DELETE_RETWEET}`
+import {  OperationName } from "~factory/enum"
 
 
 export const xRequestHeaders = {
@@ -12,8 +6,29 @@ export const xRequestHeaders = {
    xClientTransactionId : "x-client-transaction-id",
    xCsrfToken : "x-csrf-token",
    authorization : "authorization",
-   xTwitterAuthType : "x-twitter-auth-type"
+   xTwitterAuthType : "x-twitter-auth-type",
+   cookie : "Cookie"
 } 
 
 
-// https://abs.twimg.com/responsive-web/client-web/main.
+
+
+// const raw = `variables=%7B...%7D&features=%7B...%7D` // your string
+
+// const params = new URLSearchParams(raw)
+
+// const result = {
+//   variables: JSON.parse(params.get("variables")),
+//   features: JSON.parse(params.get("features")),
+//   fieldToggles: JSON.parse(params.get("fieldToggles"))
+// }
+
+// console.log(JSON.stringify(result, null, 2))
+
+// const params = new URLSearchParams({
+//   variables:    JSON.stringify(data.variables),
+//   features:     JSON.stringify(data.features),
+//   fieldToggles: JSON.stringify(data.fieldToggles)
+// })
+
+// const result = params.toString()

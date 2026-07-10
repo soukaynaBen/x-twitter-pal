@@ -1,3 +1,25 @@
 
- const apiUrl = "https://x.com/i/api/graphql/"
-
+ export const apiPath = "/i/api/graphql/"
+ export const baseUrl = "https://x.com"
+export const XApi =
+{
+ 
+  "header": {
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "accept-encoding": "gzip, deflate, br, zstd",
+    "accept-language": "en-US,en;q=0.9",
+    "cache-control": "no-cache",
+    "origin": "https://x.com",
+    "pragma": "no-cache",
+    "referer": "https://x.com/",
+    "sec-ch-ua": "\"Chromium\";v=\"136\", \"Google Chrome\";v=\"136\", \"Not.A/Brand\";v=\"99\"",
+    "sec-ch-ua-mobile": "?0",
+    "sec-ch-ua-platform": "\"Windows\"",
+    "sec-fetch-dest": "script",
+    "sec-fetch-mode": "cors",
+    "sec-fetch-site": "cross-site",
+    "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+    "Referer": "https://x.com/home",
+    "x-twitter-active-user": "yes",
+  }
+}

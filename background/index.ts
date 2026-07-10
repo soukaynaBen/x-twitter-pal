@@ -1,36 +1,73 @@
 import { xRequestHeaders } from "~factory/constants";
+import {store} from "~redux/store"
+import { sendToBackground } from "@plasmohq/messaging";
 
 console.log("Service worker")
+chrome.runtime.onStartup.addListener(async () => {
+  console.log("Browser was just launched")
+   await   sendToBackground({name: "queries"})
 
-chrome.webRequest.onBeforeSendHeaders.addListener(
-  function(details) {
-    for (var i = 0; i < details.requestHeaders.length; ++i) {
-      if (details.requestHeaders[i].name === xRequestHeaders.xCsrfToken) {
-           console.log({[xRequestHeaders.xCsrfToken]: details.requestHeaders[i].value})
-           console.log({[xRequestHeaders.authorization]: details.requestHeaders[i].value})
-           console.log({[xRequestHeaders.xTwitterAuthType]: details.requestHeaders[i].value})
-        break;
-      }
-    }
-  },
-  {urls: ["*://x.com/*","*://www.x.com/*"]},
-);
-
-chrome.cookies.getAll({ url: "https://x.com" }, (t : chrome.cookies.Cookie[]) => {
-    const cookies = t.map(({name,value}) => ({name,value}))
-    chrome.storage.local.set({ "cookies" : cookies })
 })
 
-chrome.cookies.onChanged.addListener(async(changeInfo) => {
-  const { cookie, cause, removed } = changeInfo ;
-  if (cookie.domain === ".x.com" && "x.com") {
+chrome.webNavigation.onCommitted.addListener(async (details) => {
+  if (details.frameId !== 0) return // ignore iframes, only top-level frame
+  
+  const url = details.url
+  if (!url.includes("x.com")) return
+  
+  console.log("x.com visited")
+  const state = store.getState()
     
-      const parsedCookies = (await chrome.storage.local.get("cookies"))["cookies"]
-      const cookieChanged = parsedCookies.find(item => item.name === cookie.name)
-      if (cookieChanged.value !== cookie.value) {
-        const newCookies = parsedCookies.map((item) => item.name === cookie.name ? { name: item.name, value: cookie.value } : item) 
-        chrome.storage.local.set({ "cookies" : newCookies })
-      }
-
+  if (!JSON.parse(state.queries.ids)) {
+   await   sendToBackground({name: "queries"})
   }
-});
+})
+
+
+const headers = new Map()
+chrome.webRequest.onBeforeSendHeaders.addListener(
+  function(details) {
+    if(!(
+     headers.has(xRequestHeaders.xCsrfToken) && 
+     headers.has(xRequestHeaders.authorization) && 
+     headers.has(xRequestHeaders.xTwitterAuthType) && 
+     headers.has(xRequestHeaders.cookie) 
+   )){
+    for (var i = 0; i < details.requestHeaders.length; ++i) {
+      
+      if (details.requestHeaders[i].name === xRequestHeaders.xCsrfToken) {
+        chrome.storage.local.set({
+                   [xRequestHeaders.xCsrfToken]: details.requestHeaders[i].value, 
+                 })
+             }
+             if (details.requestHeaders[i].name === xRequestHeaders.authorization) {
+                  chrome.storage.local.set({
+                   [xRequestHeaders.authorization]: details.requestHeaders[i].value,
+                 })
+             }
+             if (details.requestHeaders[i].name === xRequestHeaders.xTwitterAuthType) {
+                  chrome.storage.local.set({
+                   [xRequestHeaders.xTwitterAuthType]: details.requestHeaders[i].value
+                 })
+             }
+             if (details.requestHeaders[i].name === xRequestHeaders.cookie) {
+                  chrome.storage.local.set({
+                   [xRequestHeaders.cookie]: details.requestHeaders[i].value
+                 })
+             }
+           }
+     
+    }
+  },
+  {urls: ["*://x.com/*","*://www.x.com/*"] },
+  ["requestHeaders", "extraHeaders"]
+);
+
+
+
+
+
+
+
+
+
