@@ -18,6 +18,7 @@ import { mainModalSelector } from "~redux/main-modal-slice"
 import { PersistGate } from "@plasmohq/redux-persist/integration/react"
 
 import { persistor, store } from "~/redux/store"
+import { Card } from "~components/ui/card"
 
 
 
@@ -28,6 +29,7 @@ export const config: PlasmoCSConfig = {
 function deleteAllLikes(){}
 function deleteAllPosts(){}
 function deleteAllReplies(){}
+//TODO
 // function exportAllLikes(){}
 // function exportAllPosts(){}
 // function exportAllReplays(){}
@@ -76,19 +78,18 @@ export const getRootContainer = () =>
 
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
    const display = useSelector(mainModalSelector)
+   const rootContainer : HTMLDivElement= document.querySelector(`div[id="x-twitter-root-container"]`)
    useEffect(()=>{
      console.log({display})
-  //  const rootContainer : HTMLDivElement= document.querySelector(`div[id="x-twitter-root-container"]`)
-    // rootContainer.style.display = String(display) 
-  // document.body.style.overflowY = display ? "hidden" : "scroll" 
+    rootContainer.style.display = display ? "flex" : "none"
+    document.body.style.overflowY = display ? "hidden" : "scroll" 
   
    },[display])
   return (
-    <div className="flex bg-white m-6 p-6 rounded-md"
+    <Card className="w-full"
      >
-        <h2>Modal</h2>
-        Lorem ipsum, dolor sit amet consectetur adipisicing elit. Quo veritatis fugit placeat et optio ipsam animi, atque, blanditiis cupiditate quaerat libero, quam deleniti? Inventore sed laudantium eaque libero at labore!
-    </div>
+  
+    </Card>
   )
 }
 

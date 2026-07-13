@@ -21,8 +21,8 @@ const PopupView = ()=> {
         <div className="flex h-[25rem] w-[25rem] flex-col bg-background items-center p-8">
          <h1 className="font-bold text-xl flex items-baseline leading-8 gap-1"><span>Web extension for</span>  <XTwitterIcon size={14}/> </h1>
       <div className="flex items-center space-x-2">
-      <Switch value={String(display)} onSelect={()=> dispatch(toggleModal(!display))} id="mode" />
-      <Label htmlFor="mode">Toggle main modal</Label>
+      <Switch checked={display} onCheckedChange={()=> dispatch(toggleModal(!display))} id="mode" />
+      <Label htmlFor="mode">Toggle bulk action modal</Label>
     </div>
         
  </div>
