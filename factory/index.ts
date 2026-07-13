@@ -15,7 +15,10 @@ export const requestBuilder = async (operationName : OperationName, data : reque
             let url : URL
             let userId = metaData.userId
             let screenName = metaData.screenName
-         
+            const cursor =  data.cursor ? { "cursor" : data.cursor }  : ""
+           
+
+               
          switch (operationName) {
              case OperationName.DELETE_RETWEET:
                  xTID = await generateTID(OperationName.DELETE_RETWEET, data.queryId, REQUEST_METHOD.POST)
@@ -95,6 +98,7 @@ export const requestBuilder = async (operationName : OperationName, data : reque
                 url.searchParams.set("variables", JSON.stringify({
                     "userId": userId,
                     "count": 20,
+                    ...cursor,
                     "includePromotedContent": true,
                     "withCommunity": true,
                     "withVoice": true,
@@ -166,14 +170,15 @@ export const requestBuilder = async (operationName : OperationName, data : reque
                  
                  path =`${baseUrl}${apiPath}${queryId}/${OperationName.LIKES}`
                  url = new URL( path )
+                 
 
-                url.searchParams.set("variables", JSON.stringify({
+                 url.searchParams.set("variables", JSON.stringify({
                     "userId": userId,
                     "count": 20,
-                    "includePromotedContent": false,
-                    "withClientEventToken": false,
-                    "withBirdwatchNotes": false,
-                    "withVoice": true
+                    ...cursor,
+                    "includePromotedContent": true,
+                    "withCommunity": true,
+                    "withVoice": true,
                 }))
 
                 url.searchParams.set("features", JSON.stringify({
@@ -239,13 +244,13 @@ export const requestBuilder = async (operationName : OperationName, data : reque
                   url = new URL( path )
 
                 url.searchParams.set("variables", JSON.stringify({
-                    "userId" : userId,
-                    "count" : 20,
-                    "includePromotedContent" : true,
-                    "withQuickPromoteEligibilityTweetFields" : true,
-                    "withVoice" : true}
-                ))
-
+                    "userId": userId,
+                    "count": 20,
+                    ...cursor,
+                    "includePromotedContent": true,
+                    "withCommunity": true,
+                    "withVoice": true,
+                }))
                 url.searchParams.set("features", JSON.stringify({
                     "rweb_video_screen_enabled": false,
                     "rweb_cashtags_enabled": true,
@@ -373,15 +378,18 @@ export async function getLikes(data: requestDataInterface){
         const response =  await requestBuilder(operationName, data)        
           if (response.ok) {
                
-                 const  {data} : LikesResponse =  await response.json()
-                 
+                 const  result =  await response.json()
+                             const entries : LikesTimelineAddEntriesInstruction = result.data.user.result.timeline.timeline.instructions.find((ins) => ins.type === "TimelineAddEntries");
+                	if (!entries) throw new Error("No TimelineAddEntries found");
+			       const { items, cursor } = fromEntriesToItems(entries);
+                   return { items, cursor }
                 }
             } catch (error) {
                 console.log(error)
             }
 
 }
-export async function deleteTweet(data: requestDataInterface){
+export async function deleteTweet(data: Required< Omit<requestDataInterface, "sourceTweetId">>){
     const operationName = OperationName.DELETE_TWEET
         try {
                 const response =  await requestBuilder(operationName, data)
@@ -395,7 +403,7 @@ export async function deleteTweet(data: requestDataInterface){
 
       }
 }
-export async function deleteRetweet(data: requestDataInterface){
+export async function deleteRetweet(data:  Required< Omit<requestDataInterface, "tweetId">>){
       const operationName = OperationName.DELETE_RETWEET
           try {
                   const response =  await requestBuilder(operationName, data)
@@ -410,15 +418,11 @@ export async function deleteRetweet(data: requestDataInterface){
       }
 }
 
-export async function unfavoriteTweet(data: requestDataInterface){
+export async function unfavoriteTweet(data : Required< Omit<requestDataInterface, "sourceTweetId">>){
       const operationName = OperationName.UNFAVORITE_TWEET
-          try {
+          try {  
                   const response =  await requestBuilder(operationName, data)
-                    if (response.ok) {
-                    const result = await response.json()
-                 const entries = result.data.user.result.timeline.timeline.instructions.find((ins) => ins.type === "TimelineAddEntries");
-                	if (!entries) throw new Error("No TimelineAddEntries found");
-			       const { items, cursor } = fromEntriesToItems(entries);
+                    if (response.ok) {           
                  return  await response.json()
 
                }
@@ -500,6 +504,7 @@ export async function unfavoriteTweet(data: requestDataInterface){
 // 			}
 // 		}
 // 	};
+
 
 
 

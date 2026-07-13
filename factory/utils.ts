@@ -370,9 +370,9 @@ async function digestMessage(message){
 
 
 export function fromEntriesToItems(entries : UserTimelineAddEntriesInstruction | LikesTimelineAddEntriesInstruction) {
-    const items = [];
-    const ids = [];
-    let cursor;
+    const items :   LikesTimelineTweetContent | UserTimelineTimelineModuleContent["items"][number]["item"][] = []
+    const ids : string[]= [];
+    let cursor: string ;
     for (const entry of entries.entries) {
 
         if (entry.content.entryType === "TimelineTimelineItem" && !entry.entryId.startsWith("promoted-")) {

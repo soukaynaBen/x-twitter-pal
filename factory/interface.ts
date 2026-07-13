@@ -7,4 +7,5 @@ export interface requestDataInterface {
     queryId : string
     sourceTweetId ?: string
     tweetId ?: string
+    cursor?: string | null
 }

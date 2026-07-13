@@ -17,10 +17,12 @@ import {
 import { Storage } from "@plasmohq/storage"
 
 import queriesSlice from "./queries-slice"
+import mainModalSlice from "./main-modal-slice"
 
 // Here you can add all your reducers
 const combinedReducers = combineReducers({
-  queries: queriesSlice
+  queries: queriesSlice,
+  mainModal: mainModalSlice
 })
 
 const persistConfig = {

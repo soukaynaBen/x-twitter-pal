@@ -40,3 +40,12 @@
   all: initial;
   box-sizing: border-box;
 }
+
+#x-twitter-root-container{
+  display: flex;
+  position: absolute;
+   inset: 0;
+  justify-content: center;
+  align-items: center;
+  background-color: rgba(0, 0, 0, .5);
+}
