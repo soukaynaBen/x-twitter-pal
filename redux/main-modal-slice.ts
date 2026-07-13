@@ -12,11 +12,17 @@ const mainModalSlice = createSlice({
      toggleModal: (state, action : PayloadAction<boolean>) => {
       state.display = action.payload
     },
+     closeModal: (state) => {
+      state.display = false
+    },
+     openModal: (state) => {
+      state.display = true
+    },
  
   }
 })
 
-export const { toggleModal } = mainModalSlice.actions
+export const { toggleModal, openModal, closeModal } = mainModalSlice.actions
 export const mainModalSelector = (state: RootState) => state.mainModal.display
 
 export default mainModalSlice.reducer

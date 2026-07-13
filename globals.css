@@ -24,6 +24,19 @@
     --destructive-foreground: 210 40% 98%;
     --ring: 215 20.2% 65.1%;
     --radius: 0.5rem;
+    --x-twitter-bg: #0c0e10;
+    --x-twitter-panel: #16191d;
+    --x-twitter-panel-raised: #1c2024;
+    --x-twitter-border: #2a2f35;
+    --x-twitter-text: #e7e9ea;
+    --x-twitter-text-dim: #8b98a5;
+    --x-twitter-accent: #6c5ce7;
+    --x-twitter-accent-hover: #7d6ef0;
+    --x-twitter-danger: #f4212e;
+    --x-twitter-danger-hover: #ff3b47;
+    --x-twitter-danger-bg: rgba(244, 33, 46, 0.08);
+    --x-twitter-radius: 16px;
+    --x-twitter-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   }
 }
 
@@ -49,3 +62,271 @@
   align-items: center;
   background-color: rgba(0, 0, 0, .5);
 }
+
+ #x-twitter-overlay-root * { box-sizing: border-box; }
+
+  #x-twitter-overlay-root {
+    font-family: var(--x-twitter-font);
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  #x-twitter-overlay-root[hidden] { display: none; }
+
+  .x-twitter-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(2px);
+  }
+
+  .x-twitter-panel {
+    position: relative;
+    width: 460px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 64px);
+    overflow-y: auto;
+    background: var(--x-twitter-panel);
+    border: 1px solid var(--x-twitter-border);
+    border-radius: var(--x-twitter-radius);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    color: var(--x-twitter-text);
+    animation: x-twitter-in 0.16s ease-out;
+  }
+
+  @keyframes x-twitter-in {
+    from { opacity: 0; transform: translateY(6px) scale(0.98); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .x-twitter-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--x-twitter-border);
+  }
+
+  .x-twitter-title-group { display: flex; flex-direction: column; gap: 4px; }
+
+  .x-twitter-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--x-twitter-danger);
+  }
+
+  .x-twitter-title {
+    font-size: 17px;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.3;
+  }
+
+  .x-twitter-description {
+    font-size: 13px;
+    color: var(--x-twitter-text-dim);
+    margin: 2px 0 0;
+    line-height: 1.45;
+  }
+
+  .x-twitter-close {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: transparent;
+    color: var(--x-twitter-text-dim);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .x-twitter-close:hover { background: var(--x-twitter-panel-raised); color: var(--x-twitter-text); }
+
+  .x-twitter-body { padding: 18px 20px 4px; display: flex; flex-direction: column; gap: 20px; }
+
+  .x-twitter-section-label {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--x-twitter-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 10px;
+  }
+
+  .x-twitter-check-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .x-twitter-check-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    background: var(--x-twitter-panel-raised);
+    border: 1px solid var(--x-twitter-border);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .x-twitter-check-item:has(input:checked) { border-color: var(--x-twitter-accent); }
+
+  .x-twitter-check-item input {
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 1.5px solid #4a5158;
+    background: transparent;
+    display: grid;
+    place-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .x-twitter-check-item input:checked {
+    background: var(--x-twitter-accent);
+    border-color: var(--x-twitter-accent);
+  }
+  .x-twitter-check-item input:checked::after {
+    content: "";
+    width: 5px;
+    height: 9px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg) translate(-1px, -1px);
+  }
+
+  .x-twitter-check-text { display: flex; flex-direction: column; gap: 1px; }
+  .x-twitter-check-title { font-size: 14px; font-weight: 600; }
+  .x-twitter-check-sub { font-size: 12px; color: var(--x-twitter-text-dim); }
+
+  .x-twitter-date-row { display: flex; gap: 10px; }
+  .x-twitter-field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  .x-twitter-field label { font-size: 12px; color: var(--x-twitter-text-dim); font-weight: 600; }
+
+  .x-twitter-field input[type="date"] {
+    background: var(--x-twitter-panel-raised);
+    border: 1px solid var(--x-twitter-border);
+    color: var(--x-twitter-text);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font-size: 13px;
+    font-family: inherit;
+    color-scheme: dark;
+  }
+  .x-twitter-field input[type="date"]:focus {
+    outline: none;
+    border-color: var(--x-twitter-accent);
+  }
+
+  .x-twitter-quick-ranges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 10px; }
+  .x-twitter-chip {
+    font-size: 12px;
+    padding: 5px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--x-twitter-border);
+    background: transparent;
+    color: var(--x-twitter-text-dim);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .x-twitter-chip:hover { color: var(--x-twitter-text); border-color: #4a5158; }
+  .x-twitter-chip.x-twitter-chip-active {
+    background: rgba(108, 92, 231, 0.15);
+    border-color: var(--x-twitter-accent);
+    color: var(--x-twitter-accent-hover);
+  }
+
+  .x-twitter-warning {
+    display: flex;
+    gap: 10px;
+    padding: 12px 13px;
+    background: var(--x-twitter-danger-bg);
+    border: 1px solid rgba(244, 33, 46, 0.25);
+    border-radius: 10px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: #ff9ba1;
+  }
+  .x-twitter-warning svg { flex-shrink: 0; margin-top: 1px; }
+
+  .x-twitter-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px 20px;
+  }
+
+  .x-twitter-count { font-size: 12.5px; color: var(--x-twitter-text-dim); }
+  .x-twitter-count strong { color: var(--x-twitter-text); }
+
+  .x-twitter-actions { display: flex; gap: 8px; }
+
+  .x-twitter-btn {
+    font-family: inherit;
+    font-size: 13.5px;
+    font-weight: 700;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    transition: background 0.15s, opacity 0.15s;
+  }
+  .x-twitter-btn-ghost {
+    background: transparent;
+    border-color: var(--x-twitter-border);
+    color: var(--x-twitter-text);
+  }
+  .x-twitter-btn-ghost:hover { background: var(--x-twitter-panel-raised); }
+
+  .x-twitter-btn-danger {
+    background: var(--x-twitter-danger);
+    color: white;
+  }
+  .x-twitter-btn-danger:hover { background: var(--x-twitter-danger-hover); }
+  .x-twitter-btn-danger:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Confirm step */
+  .x-twitter-confirm-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--x-twitter-text-dim);
+    margin-top: -6px;
+  }
+  .x-twitter-confirm-row input {
+    background: var(--x-twitter-panel-raised);
+    border: 1px solid var(--x-twitter-border);
+    color: var(--x-twitter-text);
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 13px;
+    width: 90px;
+    font-family: inherit;
+  }
+  input[type="date"]:focus::-webkit-datetime-edit-fields-wrapper,
+  input[type="date"]:focus::-webkit-datetime-edit-text,
+  input[type="date"]:focus::-webkit-datetime-edit-minute,
+  input[type="date"]:focus::-webkit-datetime-edit-hour,
+  input[type="date"]:focus::-webkit-datetime-edit-day-field,
+  input[type="date"]:focus::-webkit-datetime-edit-month-field,
+  input[type="date"]:focus::-webkit-datetime-edit-year-field {
+    background-color: transparent !important;
+    color: inherit !important;
+  }
