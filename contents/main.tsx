@@ -9,7 +9,7 @@ import type {
   PlasmoCSUIProps,
   PlasmoRender
 } from "plasmo"
-import { useEffect, type FC } from "react"
+import { useEffect, useState, type FC } from "react"
 import { createRoot } from "react-dom/client"
 import { useSelector } from "~node_modules/react-redux/dist/react-redux"
 import { mainModalSelector } from "~redux/main-modal-slice"
@@ -18,6 +18,11 @@ import { mainModalSelector } from "~redux/main-modal-slice"
 import { PersistGate } from "@plasmohq/redux-persist/integration/react"
 
 import { persistor, store } from "~/redux/store"
+import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "~components/ui/field"
+import { Checkbox } from "~components/ui/checkbox"
+import { cn } from "~lib/utils"
+import { CloseIcon, WarningIcon } from "~components/x-twitter"
+import { DatePicker } from "~components/date-picker"
 
 
 
@@ -61,7 +66,7 @@ window.addEventListener("load", async () => {
 /// display overlay 
 
 
-
+type rangeType = 7 | 30 | 365 | null
 export const getRootContainer = () =>
   new Promise((resolve) => {
     const checkInterval = setInterval(() => {
@@ -76,16 +81,46 @@ export const getRootContainer = () =>
   })
 
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
+   const [postsChecked, setPostsChecked] = useState(false)
+   const [repliesChecked, setRepliesChecked] = useState(false)
+   const [likesChecked, setLikesChecked] = useState(false)
+   const [range, setRange] = useState<rangeType>(null)
+   const [startDate, setStartDate] = useState(undefined)
+   const [endDate, setEndDate] = useState(undefined)
+
+   const options = [
+    {
+      id: "posts-checkbox" ,
+      label: "Posts",
+      description: "Original tweets and quote posts",
+      value: postsChecked,
+      onChecked: setPostsChecked,
+    },
+    {
+      id: "replies-checkbox" ,
+      label: "Replies",
+      description: "Replies you've posted to others",
+      value: repliesChecked,
+      onChecked: setRepliesChecked,
+    },
+    {
+      id: "likes-checkbox" ,
+      label: "Likes",
+      description: "Unlikes posts, doesn't delete them",
+      value: likesChecked,
+      onChecked: setLikesChecked,
+    }
+  ]
+
    const display = useSelector(mainModalSelector)
+   const rootContainer : HTMLDivElement= document.querySelector(`div[id="x-twitter-root-container"]`)
    useEffect(()=>{
-     const rootContainer : HTMLDivElement= document.querySelector(`div[id="x-twitter-root-container"]`)
     rootContainer.style.display = display ? "flex" : "none"
-    document.body.style.overflowY = display ? "hidden" : "scroll" 
   
    },[display])
   return (
 
-  <div id="x-twitter-overlay-root" role="dialog" aria-modal="true" aria-labelledby="x-twitter-title">
+  <div className="font-custom" id="x-twitter-overlay-root" role="dialog" aria-modal="true" aria-labelledby="x-twitter-title">
   <div className="x-twitter-backdrop" data-x-twitter-dismiss></div>
 
   <div className="x-twitter-panel">
@@ -99,60 +134,58 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
         </p>
       </div>
       <button className="x-twitter-close" data-x-twitter-dismiss aria-label="Close">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        <CloseIcon />
       </button>
     </div>
 
     <div className="x-twitter-body">
-      <div>
-        <div className="x-twitter-section-label">What to delete</div>
-        <div className="x-twitter-check-grid">
-          <label className="x-twitter-check-item">
-            <input type="checkbox" name="x-twitter-target" value="posts" checked />
-            <div className="x-twitter-check-text">
-              <span className="x-twitter-check-title">Posts</span>
-              <span className="x-twitter-check-sub">Original tweets and quote posts</span>
-            </div>
-          </label>
-          <label className="x-twitter-check-item">
-            <input type="checkbox" name="x-twitter-target" value="replies" checked />
-            <div className="x-twitter-check-text">
-              <span className="x-twitter-check-title">Replies</span>
-              <span className="x-twitter-check-sub">Replies you've posted to others</span>
-            </div>
-          </label>
-          <label className="x-twitter-check-item">
-            <input type="checkbox" name="x-twitter-target" value="likes" />
-            <div className="x-twitter-check-text">
-              <span className="x-twitter-check-title">Likes</span>
-              <span className="x-twitter-check-sub">Unlikes posts, doesn't delete them</span>
-            </div>
-          </label>
-        </div>
-      </div>
+      <FieldSet>
+        <FieldLegend variant="label">What to delete</FieldLegend>
+          <FieldGroup className="gap-3">
+             {options.map(({id,value,label,onChecked, description})=>(<Field key={id} onClick={()=> onChecked(!value)} className="bg-x-twitter-panel-raised border-x-twitter-border select-none cursor-pointer transition-[border-color] duration-150 py-3 px-2 border rounded-x-twitter-sm  has-[.checked]:border-x-twitter-accent flex items-center justify-center" orientation="horizontal">
+              <Checkbox
+                id={id}   
+                name={id}
+                checked={value}
+                className={cn(value && "checked", "border-x-twitter-border-second data-[state=checked]:bg-x-twitter-accent data-[state=checked]:border-x-twitter-accent border-[1.5px] w-[18px] h-[18px] rounded-[5px] transition-none" )}
+              />
+              <FieldContent >
+                <FieldLabel htmlFor={id}>
+                  {label}
+                </FieldLabel>
+                <FieldDescription className="text-x-twitter-text-dim text-xs">
+                  {description}
+                </FieldDescription>
+              </FieldContent>
+            </Field>))}
+
+        </FieldGroup>
+      </FieldSet>
 
       <div>
-        <div className="x-twitter-section-label">Filter by date</div>
-        <div className="x-twitter-date-row">
+
+        <div className="text-xs font-bold text-x-twitter-text-dim uppercase tracking-[0.04em] mb-[10px]">Filter by date</div>
+        <div className="flex gap-3" >
           <div className="x-twitter-field">
             <label htmlFor="x-twitter-date-from">From</label>
-            <input type="date" id="x-twitter-date-from" />
+            {/* <input className={cn(!!range && "opacity-45")} disabled={!!range} type="date" id="x-twitter-date-from" /> */}
+            <DatePicker date={startDate} setDate={setStartDate} />
           </div>
           <div className="x-twitter-field select-none">
             <label htmlFor="x-twitter-date-to">To</label>
-            <input type="date" id="x-twitter-date-to" />
+            <input className={cn(!!range && "opacity-45")} disabled={!!range}  type="date" id="x-twitter-date-to" />
           </div>
         </div>
         <div className="x-twitter-quick-ranges">
-          <button className="x-twitter-chip" data-range="7">Last 7 days</button>
-          <button className="x-twitter-chip" data-range="30">Last 30 days</button>
-          <button className="x-twitter-chip" data-range="365">Last year</button>
-          <button className="x-twitter-chip x-twitter-chip-active" data-range="all">All time</button>
+          <button onClick={()=> setRange(7)} className={cn("x-twitter-chip", range === 7 && "x-twitter-chip-active")}  data-range="7">Last 7 days </button>
+          <button onClick={()=> setRange(30)}  className={cn("x-twitter-chip", range === 30  && "x-twitter-chip-active")}  data-range="30">Last 30 days</button>
+          <button onClick={()=> setRange(365)}  className={cn("x-twitter-chip", range === 365  && "x-twitter-chip-active")}  data-range="365">Last year</button>
+          <button onClick={()=> setRange(null)} className={cn("x-twitter-chip",  !range && "x-twitter-chip-active")} data-range="all">All time</button>
         </div>
       </div>
 
       <div className="x-twitter-warning">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 9v4M12 17h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+      <WarningIcon/>
         <span>This action is permanent. Deleted posts and replies can't be recovered, and unliked posts will disappear from your Likes tab.</span>
       </div>
     </div>

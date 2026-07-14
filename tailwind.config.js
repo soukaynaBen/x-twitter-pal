@@ -37,12 +37,33 @@ module.exports = {
         card: {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))"
-        }
+        },
+        "x-twitter":{
+              "bg": "var(--x-twitter-bg:)",
+              "panel": "var(--x-twitter-panel)",
+              "panel-raised": "var(--x-twitter-panel-raised)",
+              "border": "var(--x-twitter-border)",
+              "text": "var(--x-twitter-text)",
+              "text-dim": "var(--x-twitter-text-dim)",
+              "accent": "var(--x-twitter-accent)",
+              "accent-hover": "var(--x-twitter-accent-hover)",
+              "danger": "var(--x-twitter-danger)",
+              "danger-hover": "var(--x-twitter-danger-hover)",
+              "danger-bg": "var(--x-twitter-danger-bg)",
+              "border-second": "var(--x-twitter-border-second)",
+        },
       },
       borderRadius: {
         lg: `var(--radius)`,
         md: `calc(var(--radius) - 2px)`,
-        sm: "calc(var(--radius) - 4px)"
+        sm: "calc(var(--radius) - 4px)",
+           "x-twitter-lg": `var( --x-twitter-radius)`,
+           "x-twitter-md": `calc(var( --x-twitter-radius) - 4px)`,
+           "x-twitter-sm": "calc(var( --x-twitter-radius) - 6px)"
+      
+      },
+        fontFamily: {
+        custom: ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "Helvetica", "Arial","sans-serif"], 
       }
     }
   },
