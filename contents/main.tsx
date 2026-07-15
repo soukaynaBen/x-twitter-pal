@@ -22,7 +22,11 @@ import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldLeg
 import { Checkbox } from "~components/ui/checkbox"
 import { cn } from "~lib/utils"
 import { CloseIcon, WarningIcon } from "~components/x-twitter"
-import { DatePicker } from "~components/date-picker"
+import { DatePickerRange } from "~components/date-picker"
+import type { DateRange } from "~node_modules/react-day-picker/dist/cjs"
+import { subDays } from "date-fns"
+
+
 
 
 
@@ -40,7 +44,6 @@ function deleteAllReplies(){}
 
 window.addEventListener("load", async () => {
   try {
- 
     const { queries } : { queries: Record<OperationName, string> } =  await sendToBackground({ name: "queries" })
     let data =  { queryId : queries[OperationName.LIKES] , cursor: null}
     let n = 0
@@ -66,9 +69,11 @@ window.addEventListener("load", async () => {
 /// display overlay 
 
 
-type rangeType = 7 | 30 | 365 | null
+type rangeType = 7 | 30 | 365 | "all"
+
 export const getRootContainer = () =>
   new Promise((resolve) => {
+    
     const checkInterval = setInterval(() => {
       const rootContainerParent = document.querySelector(`[id="react-root"]`)
       if (rootContainerParent) {
@@ -80,14 +85,17 @@ export const getRootContainer = () =>
     }, 137)
   })
 
-const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
-   const [postsChecked, setPostsChecked] = useState(false)
-   const [repliesChecked, setRepliesChecked] = useState(false)
-   const [likesChecked, setLikesChecked] = useState(false)
-   const [range, setRange] = useState<rangeType>(null)
-   const [startDate, setStartDate] = useState(undefined)
-   const [endDate, setEndDate] = useState(undefined)
 
+const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
+  const rangeValues  = [ 7 , 30 , 365 ]
+  const [postsChecked, setPostsChecked] = useState(true)
+  const [repliesChecked, setRepliesChecked] = useState(false)
+  const [likesChecked, setLikesChecked] = useState(false)
+  const [date, setDate] = useState<DateRange | undefined>(undefined) ;
+  const [range, setRange] = useState< rangeType | undefined>("all")
+  const [confirmInput, setConfirmInput] = useState("")
+     
+// value.trim().toUpperCase() !== 'DELETE'
    const options = [
     {
       id: "posts-checkbox" ,
@@ -114,13 +122,58 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
    const display = useSelector(mainModalSelector)
    const rootContainer : HTMLDivElement= document.querySelector(`div[id="x-twitter-root-container"]`)
+
    useEffect(()=>{
     rootContainer.style.display = display ? "flex" : "none"
   
    },[display])
-  return (
 
-  <div className="font-custom" id="x-twitter-overlay-root" role="dialog" aria-modal="true" aria-labelledby="x-twitter-title">
+
+   const handleRange = (value) => {
+       switch (value) {
+        case rangeValues[0]:
+            setDate( {
+            from: subDays(new Date(), rangeValues[0]),
+            to: new Date(),
+          }) 
+          setRange(rangeValues[0] as rangeType)
+          break;
+          case rangeValues[1]:
+            setDate( {
+              from: subDays(new Date(), rangeValues[1]),
+              to: new Date(),
+            }) 
+            setRange(rangeValues[1] as rangeType)
+            break;
+            case rangeValues[2]:
+              setDate( {
+                from: subDays(new Date(), rangeValues[2]),
+                to: new Date(),
+              }) 
+              setRange(rangeValues[2] as rangeType)
+              break;
+              
+              default:
+                setDate(undefined) 
+                setRange("all")
+          break;
+       } 
+
+   }
+
+const handleSubmit : React.FormEventHandler<HTMLFormElement>= (e: React.FormEvent<HTMLFormElement>)=> {
+   e.preventDefault();
+   console.log(e)
+   if (postsChecked || repliesChecked || likesChecked) {
+    return null;
+   } 
+}
+/// TODO Check at least one option
+const handleCheck = ()=> {
+
+}
+
+  return (<div className="font-custom" id="x-twitter-overlay-root" role="dialog" aria-modal="true" aria-labelledby="x-twitter-title">
   <div className="x-twitter-backdrop" data-x-twitter-dismiss></div>
 
   <div className="x-twitter-panel">
@@ -166,21 +219,17 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
         <div className="text-xs font-bold text-x-twitter-text-dim uppercase tracking-[0.04em] mb-[10px]">Filter by date</div>
         <div className="flex gap-3" >
-          <div className="x-twitter-field">
-            <label htmlFor="x-twitter-date-from">From</label>
-            {/* <input className={cn(!!range && "opacity-45")} disabled={!!range} type="date" id="x-twitter-date-from" /> */}
-            <DatePicker date={startDate} setDate={setStartDate} />
+          <div onClick={()=>setRange(undefined)} className="x-twitter-field">
+            <label htmlFor="x-twitter-date-from">Date picker range</label>
+            <DatePickerRange  date={date} setDate={setDate} />
           </div>
-          <div className="x-twitter-field select-none">
-            <label htmlFor="x-twitter-date-to">To</label>
-            <input className={cn(!!range && "opacity-45")} disabled={!!range}  type="date" id="x-twitter-date-to" />
-          </div>
+       
         </div>
         <div className="x-twitter-quick-ranges">
-          <button onClick={()=> setRange(7)} className={cn("x-twitter-chip", range === 7 && "x-twitter-chip-active")}  data-range="7">Last 7 days </button>
-          <button onClick={()=> setRange(30)}  className={cn("x-twitter-chip", range === 30  && "x-twitter-chip-active")}  data-range="30">Last 30 days</button>
-          <button onClick={()=> setRange(365)}  className={cn("x-twitter-chip", range === 365  && "x-twitter-chip-active")}  data-range="365">Last year</button>
-          <button onClick={()=> setRange(null)} className={cn("x-twitter-chip",  !range && "x-twitter-chip-active")} data-range="all">All time</button>
+          <button onClick={()=> handleRange(rangeValues[0])} className={cn("x-twitter-chip", range === rangeValues[0] && "x-twitter-chip-active")}  data-range={rangeValues[0]}>Last 7 days </button>
+          <button onClick={()=> handleRange(rangeValues[1])}  className={cn("x-twitter-chip", range === rangeValues[1]  && "x-twitter-chip-active")}  data-range={rangeValues[1]}>Last 30 days</button>
+          <button onClick={()=> handleRange(rangeValues[2])}  className={cn("x-twitter-chip", range === rangeValues[2]  && "x-twitter-chip-active")}  data-range={rangeValues[2]}>Last year</button>
+          <button onClick={()=> handleRange(null)} className={cn("x-twitter-chip",  range === "all" && "x-twitter-chip-active")} data-range="all">All time</button>
         </div>
       </div>
 
@@ -190,19 +239,17 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
       </div>
     </div>
 
-    <div className="x-twitter-footer flex-col items-stretch gap-3">
+    <form  onSubmit={handleSubmit} className="x-twitter-footer flex-col items-stretch gap-3">
       <div className="x-twitter-confirm-row">
         Type <strong>&nbsp;DELETE&nbsp;</strong> to confirm:
-        <input type="text" id="x-twitter-confirm-input" autoComplete="off" spellCheck="false" />
+        <input onChange={(e)=>setConfirmInput(e.target.value)} type="text" id="x-twitter-confirm-input" autoComplete="off" spellCheck="false" />
       </div>
       <div className="flex items-center justify-between gap-3" >
-        <span className="x-twitter-count" id="x-twitter-count-label"><strong>—</strong> items match this filter</span>
         <div className="x-twitter-actions">
-          <button className="x-twitter-btn x-twitter-btn-ghost" data-x-twitter-dismiss>Cancel</button>
-          <button className="x-twitter-btn x-twitter-btn-danger" id="x-twitter-submit" disabled>Delete selected</button>
+          <button type="submit" className="x-twitter-btn x-twitter-btn-danger" id="x-twitter-submit" disabled={confirmInput.trim().toUpperCase() !== 'DELETE'}>Delete selected</button>
         </div>
       </div>
-    </div>
+    </form>
   </div>
 </div>
   )
@@ -211,9 +258,12 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 export const render: PlasmoRender<PlasmoCSUIJSXContainer> = async ({
   createRootContainer
 }) => {
+  
   const rootContainer = await createRootContainer()
   rootContainer.setAttribute("id", "x-twitter-root-container")
   const root = createRoot(rootContainer)
+  document.querySelector("html").setAttribute("class", "dark")
+
   root.render(
          <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
