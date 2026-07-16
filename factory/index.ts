@@ -35,9 +35,9 @@ export const requestBuilder = async (operationName : OperationName, data : reque
                             },
                               "method": "POST",
                                 body : JSON.stringify({
+                                        queryId,
                                         variables: {
                                             source_tweet_id: data.sourceTweetId,
-                                            queryId
                                         }
                                 }) 
                             })
@@ -57,9 +57,9 @@ export const requestBuilder = async (operationName : OperationName, data : reque
                             },
                             "method": "POST",
                             body: JSON.stringify({
+                                    queryId,
                                     variables: {
                                         tweet_id: data.tweetId,
-                                        queryId
                                     }
                             }) 
                     })
@@ -80,9 +80,9 @@ export const requestBuilder = async (operationName : OperationName, data : reque
                              },
                              "method": "POST",
                              body: JSON.stringify({
+                                     queryId,
                                      variables: {
                                          tweet_id: data.tweetId,
-                                         queryId
                                      }
                              }) 
                      })
@@ -389,7 +389,7 @@ export async function getLikes(data: requestDataInterface){
             }
 
 }
-export async function deleteTweet(data: Required< Omit<requestDataInterface, "sourceTweetId">>){
+export async function deleteTweet(data: Required< Omit<requestDataInterface, "cursor" | "sourceTweetId">>){
     const operationName = OperationName.DELETE_TWEET
         try {
                 const response =  await requestBuilder(operationName, data)
@@ -403,7 +403,7 @@ export async function deleteTweet(data: Required< Omit<requestDataInterface, "so
 
       }
 }
-export async function deleteRetweet(data:  Required< Omit<requestDataInterface, "tweetId">>){
+export async function deleteRetweet(data:  Required< Omit<requestDataInterface, "cursor" | "tweetId">>){
       const operationName = OperationName.DELETE_RETWEET
           try {
                   const response =  await requestBuilder(operationName, data)
@@ -418,7 +418,7 @@ export async function deleteRetweet(data:  Required< Omit<requestDataInterface, 
       }
 }
 
-export async function unfavoriteTweet(data : Required< Omit<requestDataInterface, "sourceTweetId">>){
+export async function unfavoriteTweet(data : Required< Omit<requestDataInterface, "cursor" | "sourceTweetId">>){
       const operationName = OperationName.UNFAVORITE_TWEET
           try {  
                   const response =  await requestBuilder(operationName, data)
@@ -431,80 +431,4 @@ export async function unfavoriteTweet(data : Required< Omit<requestDataInterface
 
       }
 }
-
-
-
-    // const variables = `{"listId":"${this.listID}","count":20${cursor ? ",\"cursor\":\"" + cursor + "\"" : ""}}`
-    // async *fetchPagesSource(chapter) {
-    // 	let cursor;
-    // 	while (true) try {
-    // 		const [mediaPage, nextCursor] = await this.api.next(chapter, cursor);
-    // 		cursor = nextCursor || "last";
-    // 		if (!mediaPage || mediaPage.length === 0) break;
-    // 		yield Result.ok(mediaPage);
-    // 		if (!nextCursor) break;
-    // 	} catch (error) {
-    // 		yield Result.err(error);
-    // 	}
-    // }
-
-// 	var Result = class {
-// 		value;
-// 		error;
-// 		static ok(value) {
-// 			return { value };
-// 		}
-// 		static err(error) {
-// 			return { error };
-// 		}
-// 	};
-
-
-// 		uuid = uuid();
-// 		userID;
-// 		async *fetchChapters() {
-// 			if (window.location.href.includes("/media")) return [new Chapter(1, "User Medias", window.location.href, "https://pbs.twimg.com/profile_images/1683899100922511378/5lY42eHs_bigger.jpg")];
-// 			else return [new Chapter(0, "User Posts", window.location.href, "https://pbs.twimg.com/profile_images/1683899100922511378/5lY42eHs_bigger.jpg"), new Chapter(1, "User Media", window.location.href, "https://pbs.twimg.com/profile_images/1683899100922511378/5lY42eHs_bigger.jpg")];
-// 		}
-// 		async next(chapter, cursor) {
-// 			if (!this.userID) this.userID = getUserID();
-// 			if (!this.userID) throw new Error("Cannot obatained User ID");
-// 			let url = "";
-// 			if (chapter.id === 0) {
-// 				const variables = `{"userId":"${this.userID}","count":20,${cursor ? "\"cursor\":\"" + cursor + "\"," : ""}"includePromotedContent":true,"withQuickPromoteEligibilityTweetFields":true,"withVoice":true}`;
-// 				url = `${window.location.origin}/i/api/graphql/ehYmFq6d3xwc49yqt52MIg/UserTweets?variables=${encodeURIComponent(variables)}&features=%7B%22rweb_video_screen_enabled%22%3Afalse`;
-// 			} else {
-// 				const variables = `{"userId":"${this.userID}","count":20,${cursor ? "\"cursor\":\"" + cursor + "\"," : ""}"includePromotedContent":false,"withClientEventToken":false,"withBirdwatchNotes":false,"withVoice":true,"withV2Timeline":true}`;
-// 				url = `${window.location.origin}/i/api/graphql/MjGtmDI0wpveHq8k2zIlUQ/UserMedia?variables=${encodeURIComponent(variables)}&features=%7B%22rweb_video`;
-// 			}
-// 			try {
-// 				const res = await window.fetch(url, {
-// 					headers: createHeader(this.uuid),
-// 					signal: AbortSignal.timeout(1e4)
-// 				});
-// 				const json = await res.json();
-// 				if (res.status !== 200 && json?.errors?.[0].message) throw new Error(json?.errors?.[0].message);
-// 				if (chapter.id === 0) {
-// 					const entries = json.data.user.result.timeline.timeline.instructions.find((ins) => ins.type === "TimelineAddEntries");
-// 					if (!entries) throw new Error("Not found TimelineAddEntries");
-// 					const { items, cursor } = ForEntriesToItems(entries);
-// 					return [items, cursor];
-// 				} else {
-// 					const instructions = json.data.user.result.timeline.timeline.instructions;
-// 					const items = [];
-// 					const addToModule = instructions.find((ins) => ins.type === "TimelineAddToModule");
-// 					const entries = instructions.find((ins) => ins.type === "TimelineAddEntries");
-// 					if (!entries) throw new Error("Not found TimelineAddEntries");
-// 					if (addToModule) addToModule.moduleItems.forEach((i) => items.push(i.item));
-// 					if (items.length === 0) (entries.entries.find((entry) => entry.content.entryType === "TimelineTimelineModule")?.content)?.items.forEach((i) => items.push(i.item));
-// 					return [items, (entries.entries.find((entry) => entry.content.entryType === "TimelineTimelineCursor" && entry.entryId.startsWith("cursor-bottom"))?.content)?.value];
-// 				}
-// 			} catch (error) {
-// 				throw new Error(`twitter api query error: ${error}`);
-// 			}
-// 		}
-// 	};
-
-
-
 

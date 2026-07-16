@@ -1,8 +1,8 @@
-
 import "globals.css"
 import { sendToBackground } from "@plasmohq/messaging"
-import { getUserTweetsAndReplays, unfavoriteTweet , getLikes} from "~factory"
+import { getUserTweetsAndReplays, unfavoriteTweet , getLikes, deleteTweet, deleteRetweet} from "~factory"
 import { OperationName } from "~factory/enum"
+
 import type {
   PlasmoCSConfig,
   PlasmoCSUIJSXContainer,
@@ -20,12 +20,13 @@ import { PersistGate } from "@plasmohq/redux-persist/integration/react"
 import { persistor, store } from "~/redux/store"
 import { Field, FieldContent, FieldDescription, FieldGroup, FieldLabel, FieldLegend, FieldSet } from "~components/ui/field"
 import { Checkbox } from "~components/ui/checkbox"
-import { cn } from "~lib/utils"
-import { CloseIcon, WarningIcon } from "~components/x-twitter"
+import { cn, Sleep } from "~lib/utils"
+import { WarningIcon } from "~components/x-twitter"
 import { DatePickerRange } from "~components/date-picker"
-import type { DateRange } from "~node_modules/react-day-picker/dist/cjs"
 import { subDays } from "date-fns"
-
+import type { DateRange } from "react-day-picker"
+import { getQueryId } from "~factory/utils"
+import { Spinner } from "~components/ui/spinner"
 
 
 
@@ -34,9 +35,122 @@ export const config: PlasmoCSConfig = {
   matches: ["https://www.x.com/*","https://x.com/*"],
 }
 
-function deleteAllLikes(){}
-function deleteAllPosts(){}
-function deleteAllReplies(){}
+type rangeType = 7 | 30 | 365 | "all"
+const rangeValues  = [ 7 , 30 , 365 ]
+
+enum OptionsEnum {
+    POSTS = "posts-checkbox" ,
+    REPLIES = "replies-checkbox" ,
+    LIKES = "likes-checkbox" ,
+}
+
+  const options = [
+  {
+    id: OptionsEnum.POSTS ,
+    label: "Posts",
+    description: "Original tweets and quote posts",
+  },
+  {
+    id: OptionsEnum.REPLIES ,
+    label: "Replies",
+    description: "Replies you've posted to others",
+  },
+  {
+    id: OptionsEnum.LIKES ,
+    label: "Likes",
+    description: "Unlikes posts, doesn't delete them",
+  }
+]
+
+async function deleteLikes(startTimestamp: number, endTimestamp: number){
+  //OperationName.LIKES
+         let done = false
+        try {
+              while(!done){
+                const {items}  =  await getLikes({queryId: getQueryId(OperationName.LIKES)})
+                  if (items.length === 0) break;
+
+                  for (let i = 0; i < items.length; i++) {
+                   const element = items[i];
+                   const timeStamp =  new Date(element.itemContent.tweet_results.result.legacy.created_at).getTime()
+
+                   if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
+                      const tweetId = element.itemContent.tweet_results.result.rest_id
+                      await unfavoriteTweet({ queryId : getQueryId(OperationName.LIKES), tweetId })
+                    }else if(timeStamp < startTimestamp ){
+                      done = true
+                      break;
+                    }
+                    await Sleep(5)
+
+                  }
+                  
+              }
+        } catch (error) {
+          console.log(error)
+        }   
+
+}
+
+async function deletePosts(startTimestamp: number, endTimestamp: number){
+        // OperationName.USER_TWEETS
+
+         let done = false
+        try {
+              while(!done){
+                const {items}  =  await getLikes({queryId: getQueryId(OperationName.USER_TWEETS)})
+                  if (items.length === 0) break;
+
+                  for (let i = 0; i < items.length; i++) {
+                   const element = items[i];
+                   const timeStamp =  new Date(element.itemContent.tweet_results.result.legacy.created_at).getTime()
+
+                   if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
+                      const tweetId = element.itemContent.tweet_results.result.rest_id
+                      await deleteTweet({ queryId : getQueryId(OperationName.USER_TWEETS), tweetId })
+                   }else if(timeStamp < startTimestamp ){
+                     done = true
+                     break;
+                   }
+
+                  }
+                  
+              }
+        } catch (error) {
+          console.log(error)
+        }   
+ 
+}
+
+async function deleteReplies(startTimestamp: number, endTimestamp: number){
+      // OperationName.USER_TWEETS_AND_REPLIES
+            let done = false
+        try {
+              while(!done){
+                const {items}  =  await getLikes({queryId: getQueryId(OperationName.USER_TWEETS_AND_REPLIES)})
+                  if (items.length === 0) break;
+
+                  for (let i = 0; i < items.length; i++) {
+                   const element = items[i];
+                   const timeStamp =  new Date(element.itemContent.tweet_results.result.legacy.created_at).getTime()
+
+                   if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
+                      const sourceTweetId = element.itemContent.tweet_results.result.rest_id
+                      await deleteRetweet({ queryId : getQueryId(OperationName.USER_TWEETS_AND_REPLIES), sourceTweetId })
+                   }else if(timeStamp < startTimestamp ){
+                     done = true
+                     break;
+                   }
+
+                  }
+                  
+              }
+        } catch (error) {
+          console.log(error)
+        }   
+ 
+}
+
 //TODO
 // function exportAllLikes(){}
 // function exportAllPosts(){}
@@ -44,32 +158,13 @@ function deleteAllReplies(){}
 
 window.addEventListener("load", async () => {
   try {
-    const { queries } : { queries: Record<OperationName, string> } =  await sendToBackground({ name: "queries" })
-    let data =  { queryId : queries[OperationName.LIKES] , cursor: null}
-    let n = 0
-    let tweetsList = []
-
-    if(!!queries) {
-      // while(n < 3){
-      //   const { items, cursor } =  await getLikes(data)
-      //   data.cursor = cursor
-      //   tweetsList.push(items)
-      //   n++
-      //   if (items.length === 0) break;
-      // }
-      // tweetsList.flat()
-      // console.log({tweetsList})
-    }
-    
+    await sendToBackground({ name: "queries" })
+  
   } catch (error) {
     console.log(error)
   }
 
 })
-/// display overlay 
-
-
-type rangeType = 7 | 30 | 365 | "all"
 
 export const getRootContainer = () =>
   new Promise((resolve) => {
@@ -87,44 +182,27 @@ export const getRootContainer = () =>
 
 
 const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
-  const rangeValues  = [ 7 , 30 , 365 ]
-  const [postsChecked, setPostsChecked] = useState(true)
-  const [repliesChecked, setRepliesChecked] = useState(false)
-  const [likesChecked, setLikesChecked] = useState(false)
+
+  const display = useSelector(mainModalSelector)
   const [date, setDate] = useState<DateRange | undefined>(undefined) ;
   const [range, setRange] = useState< rangeType | undefined>("all")
   const [confirmInput, setConfirmInput] = useState("")
-     
-// value.trim().toUpperCase() !== 'DELETE'
-   const options = [
-    {
-      id: "posts-checkbox" ,
-      label: "Posts",
-      description: "Original tweets and quote posts",
-      value: postsChecked,
-      onChecked: setPostsChecked,
-    },
-    {
-      id: "replies-checkbox" ,
-      label: "Replies",
-      description: "Replies you've posted to others",
-      value: repliesChecked,
-      onChecked: setRepliesChecked,
-    },
-    {
-      id: "likes-checkbox" ,
-      label: "Likes",
-      description: "Unlikes posts, doesn't delete them",
-      value: likesChecked,
-      onChecked: setLikesChecked,
-    }
-  ]
+  const [processing, setProcessing] = useState(false)   
+  const [optionsChecked, setOptionsChecked] = useState<Record<OptionsEnum, boolean>>({
+    [OptionsEnum.POSTS]: true,
+    [OptionsEnum.REPLIES]: false,
+    [OptionsEnum.LIKES]: false
+  })
 
-   const display = useSelector(mainModalSelector)
+
+
    const rootContainer : HTMLDivElement= document.querySelector(`div[id="x-twitter-root-container"]`)
-
+   
    useEffect(()=>{
-    rootContainer.style.display = display ? "flex" : "none"
+     const rootContainer : HTMLDivElement= document.querySelector(`div[id="x-twitter-root-container"]`)
+    if (rootContainer) {
+      rootContainer.style.display = display ? "flex" : "none"
+    }
   
    },[display])
 
@@ -161,23 +239,51 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
    }
 
-const handleSubmit : React.FormEventHandler<HTMLFormElement>= (e: React.FormEvent<HTMLFormElement>)=> {
+const handleSubmit : React.FormEventHandler<HTMLFormElement> = async (e: React.FormEvent<HTMLFormElement>)=> {
    e.preventDefault();
-   console.log(e)
-   if (postsChecked || repliesChecked || likesChecked) {
-    return null;
-   } 
-}
-/// TODO Check at least one option
-const handleCheck = ()=> {
+   try {
+      setProcessing(true)
+      // if(!Object.values(optionsChecked).reduce((acc, item)=> item || acc, false)) return null
+      // if (confirmInput.trim().toUpperCase() !== 'DELETE')  return null
+
+      // if (date) {
+      // //  if (optionsChecked["posts-checkbox"]) {
+      // //    deletePosts( date.from.getTime(), date.to.getTime())
+      // //   }
+      // //   if (optionsChecked["replies-checkbox"]) {
+      // //     deleteReplies( date.from.getTime(), date.to.getTime())
+      // //   }
+      //   if (optionsChecked["likes-checkbox"]) {
+        
+      //     await deleteLikes( date.from.getTime(), date.to.getTime())
+      //   }
+      // }else if(range === "all"){
+      //   // if (optionsChecked["posts-checkbox"]) {
+          
+      //   //   deletePosts( 0 , Date.now())
+      //   // }
+      //   // if (optionsChecked["replies-checkbox"]) {
+          
+      //   //   deleteReplies( 0 , Date.now())
+      //   // }
+      //   if (optionsChecked["likes-checkbox"]) {    
+      //     await deleteLikes( 0 , Date.now())
+      //     }
+      // }
+    } catch (error) {
+      console.log(error)
+    } finally{
+      setProcessing(false)
+    }
 
 }
-
+/// Check at least one option
+const canUnCheck = (id) => Object.values({...optionsChecked,[id] : !optionsChecked[id]}).reduce((acc, item)=> item || acc, false)
+   
   return (<div className="font-custom" id="x-twitter-overlay-root" role="dialog" aria-modal="true" aria-labelledby="x-twitter-title">
   <div className="x-twitter-backdrop" data-x-twitter-dismiss></div>
-
   <div className="x-twitter-panel">
-    <div className="x-twitter-header">
+     { processing ? (<div></div>) : (<> <div className="x-twitter-header">
       <div className="x-twitter-title-group">
         <span className="x-twitter-eyebrow">Bulk action</span>
         <h2 className="x-twitter-title" id="x-twitter-title">Delete posts, likes &amp; replies</h2>
@@ -186,21 +292,18 @@ const handleCheck = ()=> {
           browser and can't be undone once started.
         </p>
       </div>
-      <button className="x-twitter-close" data-x-twitter-dismiss aria-label="Close">
-        <CloseIcon />
-      </button>
     </div>
 
     <div className="x-twitter-body">
       <FieldSet>
         <FieldLegend variant="label">What to delete</FieldLegend>
           <FieldGroup className="gap-3">
-             {options.map(({id,value,label,onChecked, description})=>(<Field key={id} onClick={()=> onChecked(!value)} className="bg-x-twitter-panel-raised border-x-twitter-border select-none cursor-pointer transition-[border-color] duration-150 py-3 px-2 border rounded-x-twitter-sm  has-[.checked]:border-x-twitter-accent flex items-center justify-center" orientation="horizontal">
+             {options.map(({id,label, description})=>(<Field key={id} onClick={()=> canUnCheck(id) && setOptionsChecked({...optionsChecked,[id]:!optionsChecked[id]})} className="bg-x-twitter-panel-raised border-x-twitter-border select-none cursor-pointer transition-[border-color] duration-150 py-3 px-2 border rounded-x-twitter-sm  has-[.checked]:border-x-twitter-accent flex items-center justify-center" orientation="horizontal">
               <Checkbox
                 id={id}   
                 name={id}
-                checked={value}
-                className={cn(value && "checked", "border-x-twitter-border-second data-[state=checked]:bg-x-twitter-accent data-[state=checked]:border-x-twitter-accent border-[1.5px] w-[18px] h-[18px] rounded-[5px] transition-none" )}
+                checked={optionsChecked[id]}
+                className={cn(optionsChecked[id] && "checked", "border-x-twitter-border-second data-[state=checked]:bg-x-twitter-accent data-[state=checked]:border-x-twitter-accent border-[1.5px] w-[18px] h-[18px] rounded-[5px] transition-none" )}
               />
               <FieldContent >
                 <FieldLabel htmlFor={id}>
@@ -246,10 +349,12 @@ const handleCheck = ()=> {
       </div>
       <div className="flex items-center justify-between gap-3" >
         <div className="x-twitter-actions">
-          <button type="submit" className="x-twitter-btn x-twitter-btn-danger" id="x-twitter-submit" disabled={confirmInput.trim().toUpperCase() !== 'DELETE'}>Delete selected</button>
+          <button type="submit" className="x-twitter-btn x-twitter-btn-danger min-w-32 flex-nowrap gap-2 flex justify-center items-center" id="x-twitter-submit" disabled={confirmInput.trim().toUpperCase() !== 'DELETE' || processing}> { processing? (<><Spinner/> Processing</>) : "Submit"}</button>
         </div>
       </div>
     </form>
+  </>)}
+   
   </div>
 </div>
   )
@@ -258,14 +363,13 @@ const handleCheck = ()=> {
 export const render: PlasmoRender<PlasmoCSUIJSXContainer> = async ({
   createRootContainer
 }) => {
-  
+  document.querySelector("html").setAttribute("class", "dark")
   const rootContainer = await createRootContainer()
   rootContainer.setAttribute("id", "x-twitter-root-container")
   const root = createRoot(rootContainer)
-  document.querySelector("html").setAttribute("class", "dark")
 
   root.render(
-         <Provider store={store}>
+    <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <PlasmoOverlay />
       </PersistGate>
