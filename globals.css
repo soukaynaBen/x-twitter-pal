@@ -121,8 +121,7 @@
     position: relative;
     width: 460px;
     max-width: calc(100vw - 32px);
-    max-height: calc(100vh - 64px);
-    min-height: calc(80vh - 64px);
+    height: calc(100vh - 64px);
     overflow-y: auto;
     background: var(--x-twitter-panel);
     border: 1px solid var(--x-twitter-border);

@@ -9,7 +9,7 @@ import type {
   PlasmoCSUIProps,
   PlasmoRender
 } from "plasmo"
-import { useEffect, useState, type FC } from "react"
+import { useCallback, useEffect, useState, type FC } from "react"
 import { createRoot } from "react-dom/client"
 import { useSelector } from "~node_modules/react-redux/dist/react-redux"
 import { mainModalSelector } from "~redux/main-modal-slice"
@@ -64,6 +64,7 @@ enum OptionsEnum {
 
 async function deleteLikes(startTimestamp: number, endTimestamp: number){
   //OperationName.LIKES
+  console.log("delete...")
          let done = false
         try {
               while(!done){
@@ -76,7 +77,7 @@ async function deleteLikes(startTimestamp: number, endTimestamp: number){
 
                    if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
                       const tweetId = element.itemContent.tweet_results.result.rest_id
-                      await unfavoriteTweet({ queryId : getQueryId(OperationName.LIKES), tweetId })
+                      await unfavoriteTweet({ queryId : getQueryId(OperationName.UNFAVORITE_TWEET), tweetId })
                     }else if(timeStamp < startTimestamp ){
                       done = true
                       break;
@@ -107,7 +108,7 @@ async function deletePosts(startTimestamp: number, endTimestamp: number){
 
                    if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
                       const tweetId = element.itemContent.tweet_results.result.rest_id
-                      await deleteTweet({ queryId : getQueryId(OperationName.USER_TWEETS), tweetId })
+                      await deleteTweet({ queryId : getQueryId(OperationName.DELETE_TWEET), tweetId })
                    }else if(timeStamp < startTimestamp ){
                      done = true
                      break;
@@ -136,7 +137,7 @@ async function deleteReplies(startTimestamp: number, endTimestamp: number){
 
                    if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
                       const sourceTweetId = element.itemContent.tweet_results.result.rest_id
-                      await deleteRetweet({ queryId : getQueryId(OperationName.USER_TWEETS_AND_REPLIES), sourceTweetId })
+                      await deleteRetweet({ queryId : getQueryId(OperationName.DELETE_RETWEET), sourceTweetId })
                    }else if(timeStamp < startTimestamp ){
                      done = true
                      break;
@@ -239,51 +240,48 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
    }
 
-const handleSubmit : React.FormEventHandler<HTMLFormElement> = async (e: React.FormEvent<HTMLFormElement>)=> {
-   e.preventDefault();
-   try {
+const handleSubmit : React.FormEventHandler<HTMLFormElement> = useCallback(async(e: React.FormEvent<HTMLFormElement>)=> {
+      e.preventDefault();
       setProcessing(true)
-      // if(!Object.values(optionsChecked).reduce((acc, item)=> item || acc, false)) return null
-      // if (confirmInput.trim().toUpperCase() !== 'DELETE')  return null
+      if(!Object.values(optionsChecked).reduce((acc, item)=> item || acc, false)) return null
+      if (confirmInput.trim().toUpperCase() !== 'DELETE')  return null
 
-      // if (date) {
-      // //  if (optionsChecked["posts-checkbox"]) {
-      // //    deletePosts( date.from.getTime(), date.to.getTime())
-      // //   }
-      // //   if (optionsChecked["replies-checkbox"]) {
-      // //     deleteReplies( date.from.getTime(), date.to.getTime())
-      // //   }
-      //   if (optionsChecked["likes-checkbox"]) {
-        
-      //     await deleteLikes( date.from.getTime(), date.to.getTime())
+
+      if (date) {
+      //  if (optionsChecked["posts-checkbox"]) {
+      //    deletePosts( date.from.getTime(), date.to.getTime())
       //   }
-      // }else if(range === "all"){
-      //   // if (optionsChecked["posts-checkbox"]) {
+      //   if (optionsChecked["replies-checkbox"]) {
+      //     deleteReplies( date.from.getTime(), date.to.getTime())
+      //   }
+        if (optionsChecked["likes-checkbox"]) {
+          console.log("")
+          await deleteLikes( date.from.getTime(), date.to.getTime())
+        }
+      }else if(range === "all"){
+        // if (optionsChecked["posts-checkbox"]) {
           
-      //   //   deletePosts( 0 , Date.now())
-      //   // }
-      //   // if (optionsChecked["replies-checkbox"]) {
+        //   deletePosts( 0 , Date.now())
+        // }
+        // if (optionsChecked["replies-checkbox"]) {
           
-      //   //   deleteReplies( 0 , Date.now())
-      //   // }
-      //   if (optionsChecked["likes-checkbox"]) {    
-      //     await deleteLikes( 0 , Date.now())
-      //     }
-      // }
-    } catch (error) {
-      console.log(error)
-    } finally{
+        //   deleteReplies( 0 , Date.now())
+        // }
+        if (optionsChecked["likes-checkbox"]) {    
+          console.log("")
+          await deleteLikes( 0 , Date.now())
+        }
+      }
       setProcessing(false)
-    }
 
-}
+},[confirmInput,optionsChecked, date, range])
 /// Check at least one option
-const canUnCheck = (id) => Object.values({...optionsChecked,[id] : !optionsChecked[id]}).reduce((acc, item)=> item || acc, false)
+const canUnCheck = useCallback((id) => Object.values({...optionsChecked,[id] : !optionsChecked[id]}).reduce((acc, item)=> item || acc, false),[optionsChecked]) 
    
   return (<div className="font-custom" id="x-twitter-overlay-root" role="dialog" aria-modal="true" aria-labelledby="x-twitter-title">
   <div className="x-twitter-backdrop" data-x-twitter-dismiss></div>
   <div className="x-twitter-panel">
-     { processing ? (<div></div>) : (<> <div className="x-twitter-header">
+    <div className="x-twitter-header">
       <div className="x-twitter-title-group">
         <span className="x-twitter-eyebrow">Bulk action</span>
         <h2 className="x-twitter-title" id="x-twitter-title">Delete posts, likes &amp; replies</h2>
@@ -353,8 +351,6 @@ const canUnCheck = (id) => Object.values({...optionsChecked,[id] : !optionsCheck
         </div>
       </div>
     </form>
-  </>)}
-   
   </div>
 </div>
   )
