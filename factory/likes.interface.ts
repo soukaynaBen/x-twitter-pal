@@ -64,6 +64,9 @@ interface TweetResult {
         __typename: "User";
         rest_id: string;
         legacy: UserLegacy;
+          avatar?: {
+          image_url: string
+        };
       };
     };
   };
