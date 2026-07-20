@@ -121,7 +121,8 @@
     position: relative;
     width: 460px;
     max-width: calc(100vw - 32px);
-    height: calc(100vh - 64px);
+    max-height: calc(100vh - 64px);
+    min-height: calc(50vh - 64px);
     overflow-y: auto;
     background: var(--x-twitter-panel);
     border: 1px solid var(--x-twitter-border);
@@ -291,6 +292,7 @@
     font-size: 12.5px;
     line-height: 1.5;
     color: #ff9ba1;
+    margin-bottom: 8px;
   }
   .x-twitter-warning svg { flex-shrink: 0; margin-top: 1px; }
 
@@ -329,7 +331,7 @@
     color: white;
   }
   .x-twitter-btn-danger:hover { background: var(--x-twitter-danger-hover); }
-  .x-twitter-btn-danger:disabled {
+  .x-twitter-btn-danger.disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
@@ -405,22 +407,7 @@
     backdrop-filter: blur(2px);
   }
 
-  .x-twitter-panel {
-    position: relative;
-    width: 480px;
-    max-width: calc(100vw - 32px);
-    height: 560px;
-    max-height: calc(100vh - 64px);
-    background: var(--bde-panel);
-    border: 1px solid var(--bde-border);
-    border-radius: var(--bde-radius);
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    color: var(--bde-text);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    animation: x-twitter-in 0.16s ease-out;
-  }
+
   @keyframes x-twitter-in {
     from { opacity: 0; transform: translateY(6px) scale(0.98); }
     to { opacity: 1; transform: translateY(0) scale(1); }
@@ -504,31 +491,50 @@
     padding: 8px 12px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    height: 60vh;
+    overflow-y: scroll;
   }
   .x-twitter-list::-webkit-scrollbar { width: 6px; }
   .x-twitter-list::-webkit-scrollbar-thumb { background: var(--bde-border); border-radius: 3px; }
 
   .x-twitter-item {
     display: flex;
-    gap: 10px;
     padding: 12px 10px;
     border-radius: 12px;
     border: 1px solid transparent;
     transition: background 0.15s;
+    margin-top: 5px;
+    gap: 6px;
   }
-  .x-twitter-item[data-state="active"] {
+  .x-twitter-item.x-twitter-item-active {
     background: var(--bde-panel-raised);
     border-color: var(--bde-border);
   }
-  .x-twitter-item[data-state="deleted"] {
+  .x-twitter-item.x-twitter-item-deleted {
     animation: x-twitter-fade-up 0.42s ease forwards;
     pointer-events: none;
   }
   @keyframes x-twitter-fade-up {
-    0% { opacity: 1; transform: translateY(0) scale(1); max-height: 100px; margin-bottom: 6px; }
-    60% { opacity: 0; transform: translateY(-14px) scale(0.98); }
-    100% { opacity: 0; transform: translateY(-14px) scale(0.98); max-height: 0; margin-bottom: 0; padding-top: 0; padding-bottom: 0; }
+    0% { 
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      max-height: 100px;
+      margin-bottom: 6px;
+    }
+    60% { 
+      opacity: 0;
+      transform: translateY(-14px) scale(0.98);
+     }
+    100% { 
+       opacity: 0;
+       transform: translateY(-14px) scale(0.98);
+       max-height: 0;
+       margin-bottom: 0;
+       padding-top: 0;
+       padding-bottom: 0;
+       margin-top: 0;
+       border-width: 0;
+     }
   }
 
   .x-twitter-avatar {
@@ -567,7 +573,7 @@
     border-radius: 999px;
     flex-shrink: 0;
   }
-  .x-twitter-item[data-state="active"] .x-twitter-type-tag {
+  .x-twitter-item.x-twitter-item-active .x-twitter-type-tag {
     color: var(--bde-accent-hover);
     border-color: var(--bde-accent);
   }
@@ -615,23 +621,7 @@
   .x-twitter-summary { font-size: 12.5px; color: var(--bde-text-dim); }
   .x-twitter-summary strong { color: var(--bde-text); }
 
-  .x-twitter-btn {
-    font-family: inherit;
-    font-size: 13.5px;
-    font-weight: 700;
-    padding: 9px 16px;
-    border-radius: 999px;
-    border: 1px solid var(--bde-border);
-    background: transparent;
-    color: var(--bde-text);
-    cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
-  }
-  .x-twitter-btn:hover { background: var(--bde-panel-raised); }
-  .x-twitter-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-
   .x-twitter-empty {
-    display: none;
     flex-direction: column;
     align-items: center;
     justify-content: center;

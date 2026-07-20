@@ -432,3 +432,45 @@ export async function unfavoriteTweet(data : Required< Omit<requestDataInterface
       }
 }
 
+
+export const getParsedItem = (item :  {
+    itemContent: {
+        itemType: "TimelineTweet";
+        __typename: "TimelineTweet";
+        tweet_results: {
+            result: TweetResult;
+        };
+    }}) => {
+     const result = item?.itemContent?.tweet_results.result
+       switch (result.__typename){
+         
+         case  "TweetWithVisibilityResults":
+           return {
+             
+             id : result.tweet.rest_id ,
+             name: result.tweet.core.user_results.result.core.name,
+             screen_name: result.tweet.core.user_results.result.core.screen_name,
+             avatar: result.tweet.core.user_results.result.avatar.image_url,
+             text: result.tweet.legacy.full_text,
+             created_at: new Date(result.tweet.core.user_results.result.core.created_at),
+             state: "pending"
+             
+            }
+            case  "Tweet":
+              return {
+                
+                id : result.rest_id,
+                name: result.core.user_results.result.core.name,
+                screen_name: result.core.user_results.result.core.screen_name,
+                avatar: result.core.user_results.result.avatar.image_url,
+                text: result.legacy.full_text,
+                created_at: new Date(result.legacy.created_at),
+                state: "pending"
+                
+              }
+              case  "TweetTombstone":
+              default: 
+              return null
+              break;
+            }
+          }

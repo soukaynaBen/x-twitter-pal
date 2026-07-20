@@ -55,8 +55,12 @@ interface LikesTimelineCursorContent {
   cursorType: "Top" | "Bottom";
 }
 
-interface TweetResult {
-  __typename: "Tweet" | "TweetWithVisibilityResults" | "TweetTombstone";
+
+type TweetResult = TweetResultTweet | TweetResultWithVisibility | TweetResultTombstone;
+
+// Normal case — most tweets
+interface TweetResultTweet {
+  __typename: "Tweet";
   rest_id: string;
   core?: {
     user_results: {
@@ -64,9 +68,14 @@ interface TweetResult {
         __typename: "User";
         rest_id: string;
         legacy: UserLegacy;
-          avatar?: {
-          image_url: string
-        };
+        avatar: {
+          image_url: string;
+        }
+         core: {
+          created_at: string;
+          name: string;
+          screen_name: string
+        }
       };
     };
   };
@@ -80,6 +89,43 @@ interface TweetResult {
   };
 }
 
+// Wrapper case — sensitive/age-restricted/limited-visibility tweets
+interface TweetResultWithVisibility {
+  __typename: "TweetWithVisibilityResults";
+  tweet: TweetResultTweet;          // the actual tweet data lives here, same shape as above
+  limitedActionResults?: {
+    limited_actions: {
+      action: string;               // e.g. "Reply", "Share"
+      prompt?: {
+        __typename: string;
+        title: { text: string };
+        subtitle?: { text: string };
+        confirmation_button?: { text: string };
+        dismiss_button?: { text: string };
+      };
+    }[];
+  };
+  tweetInterstitial?: {
+    __typename: string;
+    displayType: string;            // e.g. "SensitiveMediaWarning"
+    text: {
+      text: string;
+      entities: any[];
+    };
+  };
+}
+
+// Deleted / withheld / unavailable tweets
+interface TweetResultTombstone {
+  __typename: "TweetTombstone";
+  tombstone: {
+    __typename: "TextTombstone";
+    text: {
+      text: string; // e.g. "This Tweet was deleted by the Tweet author."
+      entities: any[];
+    };
+  };
+}
 interface TweetLegacy {
   created_at: string;
   full_text: string;
