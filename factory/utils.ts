@@ -378,19 +378,19 @@ export function fromEntriesToItems(entries : UserTimelineAddEntriesInstruction |
         if (entry.content.entryType === "TimelineTimelineItem" && !entry.entryId.startsWith("promoted-")) {
             if (!entry.content.itemContent.tweet_results?.result) continue;
             items.push(entry.content);
-            if (entry.content.itemContent.tweet_results.result.legacy?.id_str) ids.push(entry.content.itemContent.tweet_results.result.legacy.id_str);
-            if (entry.content.itemContent.tweet_results.result.legacy?.id_str) ids.push(entry.content.itemContent.tweet_results.result.legacy?.id_str);
+            if (entry.content.itemContent.tweet_results.result.__typename === "Tweet") ids.push(entry.content.itemContent.tweet_results.result.legacy.id_str);
+            if (entry.content.itemContent.tweet_results.result.__typename === "TweetWithVisibilityResults") ids.push(entry.content.itemContent.tweet_results.result.tweet.legacy.id_str);
         } else if (entry.content.entryType === "TimelineTimelineModule" && entry.content.displayType === "VerticalConversation")
         {
             entry.content.items.forEach((i) => {
                 if (i.item.itemContent.tweet_results?.result) {
                     items.push(i.item);
-                    if (i.item.itemContent.tweet_results.result.legacy?.id_str){
+                    if (i.item.itemContent.tweet_results.result.__typename === "Tweet"){
                         ids.push(i.item.itemContent.tweet_results.result.legacy?.id_str);
                     }
-                    if (i.item.itemContent.tweet_results.result.legacy?.id_str)
+                    if (i.item.itemContent.tweet_results.result.__typename === "TweetWithVisibilityResults")
                     {
-                        ids.push(i.item.itemContent.tweet_results.result.legacy?.id_str);
+                        ids.push(i.item.itemContent.tweet_results.result.tweet.legacy.id_str);
                     } 
                 }
             });

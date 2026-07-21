@@ -1,9 +1,9 @@
 {
-  "name": "x-twitter-bulk-actions",
-  "displayName": "X twitter bulk actions",
-  "version": "0.0.1",
+  "name": "x-twitter-pal",
+  "displayName": "X twitter pal",
+  "version": "1.0.1",
   "description": "Web extension for twitter-x allows users to perform a single operation on multiple items, this extension reduces repetitive tasks, and saves time.",
-  "author": "soukaynaben",
+  "author": "soukayna ben",
   "scripts": {
     "dev": "plasmo dev",
     "build": "plasmo build",
@@ -52,9 +52,7 @@
   "manifest": {
     "host_permissions": [
       "https://x.com/*",
-      "https://.x.com/*",
-      "ws://localhost:1815/"
-    ],
+      "https://.x.com/*"],
     "permissions": [
       "webRequest",
       "webRequestBlocking",
