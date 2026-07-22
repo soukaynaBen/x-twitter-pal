@@ -23,7 +23,6 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   }
 })
 
-/// Todo : reduce requests number
 const headers = new Map()
 chrome.webRequest.onBeforeSendHeaders.addListener(
   function(details) {

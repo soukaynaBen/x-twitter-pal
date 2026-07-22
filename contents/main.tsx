@@ -30,7 +30,6 @@ import { Spinner } from "~components/ui/spinner"
 import { Progress } from "~components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "~components/ui/avatar"
 import type { metaDataInterface } from "~factory/interface"
-import { tweets as posts } from "~folder/tweets"
 
 export const config: PlasmoCSConfig = {
   matches: ["https://www.x.com/*","https://x.com/*"],
@@ -319,8 +318,14 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
 
 const handleSubmit : React.FormEventHandler<HTMLFormElement> = useCallback(async(e: React.FormEvent<HTMLFormElement>)=> {
       e.preventDefault();
+      const  { isTwitterLoggedIn } =   await sendToBackground({"name": "logged-in"})
+      if (!isTwitterLoggedIn) {
+          alert("Please log in to start using this exension!")
+        return null 
+      } 
       if(!Object.values(optionsChecked).reduce((acc, item)=> item || acc, false)) return null
       if (confirmInput.trim().toUpperCase() !== 'DELETE')  return null
+
       const  { metaData } =   await sendToBackground({"name": "metadata"})
 
       try {

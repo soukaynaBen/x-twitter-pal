@@ -58,7 +58,8 @@
       "webRequestBlocking",
       "storage",
       "tabs",
-      "webNavigation"
+      "webNavigation",
+      "cookies"
     ]
   }
 }

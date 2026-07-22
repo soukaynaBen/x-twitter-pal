@@ -1,6 +1,6 @@
-# My Plasmo Extension
+# X-Twitter Pal
 
-**Version:** 1.0.0
+**Version:** 1.0.1
 
 A browser extension built with [Plasmo](https://www.plasmo.com/) and styled using [shadcn/ui](https://ui.shadcn.com/) + Tailwind CSS.
 
