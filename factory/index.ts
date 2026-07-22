@@ -3,7 +3,7 @@ import { apiPath, baseUrl } from "./api";
 import { OperationName, REQUEST_METHOD } from "./enum";
 import { xRequestHeaders } from "./constants";
 import { fromEntriesToItems, generateTID } from "./utils";
-import type { requestDataInterface } from "./interface";
+import type { DeleteRetweetResponse, DeleteTweetResponse, metaDataInterface, requestDataInterface, UnfavoriteTweetResponse } from "./interface";
 
 
 export const requestBuilder = async (operationName : OperationName, data : requestDataInterface ) => {
@@ -389,7 +389,7 @@ export async function getLikes(data: requestDataInterface){
             }
 
 }
-export async function deleteTweet(data: Required< Omit<requestDataInterface, "cursor" | "sourceTweetId">>){
+export async function deleteTweet(data: Required< Omit<requestDataInterface, "cursor" | "sourceTweetId">>): Promise<DeleteTweetResponse>{
     const operationName = OperationName.DELETE_TWEET
         try {
                 const response =  await requestBuilder(operationName, data)
@@ -403,7 +403,7 @@ export async function deleteTweet(data: Required< Omit<requestDataInterface, "cu
 
       }
 }
-export async function deleteRetweet(data:  Required< Omit<requestDataInterface, "cursor" | "tweetId">>){
+export async function deleteRetweet(data:  Required< Omit<requestDataInterface, "cursor" | "tweetId">>): Promise<DeleteRetweetResponse>{
       const operationName = OperationName.DELETE_RETWEET
           try {
                   const response =  await requestBuilder(operationName, data)
@@ -418,7 +418,7 @@ export async function deleteRetweet(data:  Required< Omit<requestDataInterface, 
       }
 }
 
-export async function unfavoriteTweet(data : Required< Omit<requestDataInterface, "cursor" | "sourceTweetId">>){
+export async function unfavoriteTweet(data : Required< Omit<requestDataInterface, "cursor" | "sourceTweetId">>): Promise<UnfavoriteTweetResponse>{
       const operationName = OperationName.UNFAVORITE_TWEET
           try {  
                   const response =  await requestBuilder(operationName, data)
@@ -440,7 +440,7 @@ export const getParsedItem = (item :  {
         tweet_results: {
             result: TweetResult;
         };
-    }}) => {
+    }}, metaData: metaDataInterface) => {
      const result = item?.itemContent?.tweet_results.result
        switch (result.__typename){
          
@@ -452,7 +452,9 @@ export const getParsedItem = (item :  {
              screen_name: result.tweet.core.user_results.result.core.screen_name,
              avatar: result.tweet.core.user_results.result.avatar.image_url,
              text: result.tweet.legacy.full_text,
+             retweeted: result.tweet.legacy.retweeted,
              created_at: new Date(result.tweet.core.user_results.result.core.created_at),
+             is_my_reply: !!result.tweet.legacy?.in_reply_to_status_id_str &&  metaData.screenName === result.tweet.core.user_results.result.core.screen_name,
              state: "pending"
              
             }
@@ -464,6 +466,8 @@ export const getParsedItem = (item :  {
                 screen_name: result.core.user_results.result.core.screen_name,
                 avatar: result.core.user_results.result.avatar.image_url,
                 text: result.legacy.full_text,
+                retweeted: result.legacy.retweeted,
+                is_my_reply: !!result.legacy?.in_reply_to_status_id_str &&  metaData.screenName === result.core.user_results.result.core.screen_name,
                 created_at: new Date(result.legacy.created_at),
                 state: "pending"
                 

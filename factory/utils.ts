@@ -3,8 +3,6 @@ import { pathBuilder } from "~factory";
 import type { OperationName, REQUEST_METHOD } from "~factory/enum";
 import {store} from "~redux/store"
 
-
-
 const ADDITIONAL_RANDOM_NUMBER = 3;
 const DEFAULT_KEYWORD = "obfiowerehiring";
 let defaultRowIndex = null;
@@ -31,9 +29,7 @@ export async function generateTID(operationName: OperationName, queryId: string,
   const key = await getKey();
   const keyBytes = getKeyBytes(key);
   const animationKey = getAnimationKey(keyBytes);
-  console.log({path, key,keyBytes,animationKey})
   const xTID = await getTransactionID(method, path, key, keyBytes, animationKey)
-  console.log("Generated Transaction ID: ", xTID)
   return  xTID
 }
  

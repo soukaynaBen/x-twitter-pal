@@ -23,7 +23,6 @@ const handler: PlasmoMessaging.MessageHandler = async (req, res) => {
     const regex2 = new RegExp(`"screen_name":"([^"]+)","id_str":"([^"]+)",`)
     const queryResult = querylistSource.match( regex)
     const queryResult2 = result.match(regex2)
-    console.log({queryResult2})
     chrome.storage.local.set({"screenName": queryResult2[1],"userId": queryResult2[2]})
     queryResult.forEach((result) => {
         const items = result.match(getQueryIdRegex())

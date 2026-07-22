@@ -10,7 +10,6 @@ const queriesSlice = createSlice({
   initialState: { ids: '""' },
   reducers: {
     addQueries: (state, action : PayloadAction<string>) => {
-      console.log({payload: action.payload})
       state.ids = action.payload
     },
     removeQueries: (state) => {

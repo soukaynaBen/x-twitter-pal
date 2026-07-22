@@ -13,9 +13,7 @@ import setting from "~package.json"
 const PopupView = ()=> {
   const dispatch = useDispatch()
   const display = useSelector(mainModalSelector)
-  useEffect(()=>{
-         console.log({popup:display})
-  },[display])
+
   return (
 <div className="h-[25rem] w-[25rem] p-8 flex flex-col bg-x-twitter-panel text-white">
 

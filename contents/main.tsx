@@ -1,6 +1,6 @@
 import "globals.css"
 import { sendToBackground } from "@plasmohq/messaging"
-import { getUserTweetsAndReplays, unfavoriteTweet , getLikes, deleteTweet, deleteRetweet, getParsedItem} from "~factory"
+import { getUserTweetsAndReplays, unfavoriteTweet , getLikes, deleteTweet, deleteRetweet, getParsedItem, getUserTweets} from "~factory"
 import { OperationName } from "~factory/enum"
 
 import type {
@@ -29,7 +29,8 @@ import { getQueryId } from "~factory/utils"
 import { Spinner } from "~components/ui/spinner"
 import { Progress } from "~components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "~components/ui/avatar"
-
+import type { metaDataInterface } from "~factory/interface"
+import { tweets as posts } from "~folder/tweets"
 
 export const config: PlasmoCSConfig = {
   matches: ["https://www.x.com/*","https://x.com/*"],
@@ -38,8 +39,17 @@ export const config: PlasmoCSConfig = {
 type rangeType = 7 | 30 | 365 | "all"
 const rangeValues  = [ 7 , 30 , 365 ]
 
+type CountType = {
+    likesCount: number;
+    repliesCount: number;
+    postsCount: number;
+    repostsCount: number;
+    totalCount: number;
+  }
+
 enum OptionsEnum {
     POSTS = "posts-checkbox" ,
+    REPOSTS = "reposts-checkbox" ,
     REPLIES = "replies-checkbox" ,
     LIKES = "likes-checkbox" ,
 }
@@ -49,6 +59,11 @@ enum OptionsEnum {
     id: OptionsEnum.POSTS ,
     label: "Posts",
     description: "Original tweets and quote posts",
+  },
+  {
+    id: OptionsEnum.REPOSTS ,
+    label: "Reposts",
+    description: "Retweets",
   },
   {
     id: OptionsEnum.REPLIES ,
@@ -67,72 +82,19 @@ type tweetsType = Record<number, {
     avatar: string;
     text: string;
     created_at: string;
+    retweeted: boolean;
+    is_my_reply: boolean;
     state: string;
     name: string;
     screen_name: string;
 }>
 
-async function deletePosts(startTimestamp: number, endTimestamp: number){
-        // OperationName.USER_TWEETS
 
-         let done = false
-        // try {
-        //       while(!done){
-        //         const {items}  =  await getLikes({queryId: getQueryId(OperationName.USER_TWEETS)})
-        //           if (items.length === 0) break;
 
-        //           for (let i = 0; i < items.length; i++) {
-        //            const element = items[i];
-        //            const timeStamp =  new Date(element.itemContent.tweet_results.result.legacy.created_at).getTime()
-
-        //            if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
-        //               const tweetId = element.itemContent.tweet_results.result.rest_id
-        //               await deleteTweet({ queryId : getQueryId(OperationName.DELETE_TWEET), tweetId })
-        //            }else if(timeStamp < startTimestamp ){
-        //              done = true
-        //              break;
-        //            }
-
-        //           }
-                  
-        //       }
-        // } catch (error) {
-        //   console.log(error)
-        // }   
- 
-}
-
-async function deleteReplies(startTimestamp: number, endTimestamp: number){
-      // OperationName.USER_TWEETS_AND_REPLIES
-            let done = false
-        // try {
-        //       while(!done){
-        //         const {items}  =  await getLikes({queryId: getQueryId(OperationName.USER_TWEETS_AND_REPLIES)})
-        //           if (items.length === 0) break;
-
-        //           for (let i = 0; i < items.length; i++) {
-        //            const element = items[i];
-        //            const timeStamp =  new Date(element.itemContent.tweet_results.result.legacy.created_at).getTime()
-
-        //            if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
-        //               const sourceTweetId = element.itemContent.tweet_results.result.rest_id
-        //               await deleteRetweet({ queryId : getQueryId(OperationName.DELETE_RETWEET), sourceTweetId })
-        //            }else if(timeStamp < startTimestamp ){
-        //              done = true
-        //              break;
-        //            }
-
-        //           }
-                  
-        //       }
-        // } catch (error) {
-        //   console.log(error)
-        // }   
- 
-}
 
 //TODO
 // function exportAllLikes(){}
+// function exportAllReposts(){}
 // function exportAllPosts(){}
 // function exportAllReplays(){}
 
@@ -145,6 +107,7 @@ window.addEventListener("load", async () => {
   }
 
 })
+
 
 export const getRootContainer = () =>
   new Promise((resolve) => {
@@ -160,7 +123,7 @@ export const getRootContainer = () =>
     }, 137)
   })
 
-const BulkActionModal = ({ canUnCheck, setOptionsChecked, optionsChecked, setRange, range, date, setDate, handleRange, rangeValues, handleSubmit, setConfirmInput, confirmInput , processing})=> {
+const BulkActionModal = ({ canUnCheck, setOptionsChecked, optionsChecked, setRange, range, date, setDate, handleRange, rangeValues, handleSubmit, setConfirmInput, confirmInput , processing })=> {
 
   return (<div className={cn("x-twitter-panel block", processing && "hidden")} > <div className="x-twitter-header">
        
@@ -238,7 +201,7 @@ const BulkActionModal = ({ canUnCheck, setOptionsChecked, optionsChecked, setRan
     </form></div>)
 }
 
-const DeletionModal = ({ tweets, count ,doneCount, percentage , done, processing}: { tweets:tweetsType , doneCount: number, percentage: number , done: boolean, processing: boolean, count: Record<string,number>})=> {
+const DeletionModal = ({ tweets, count ,doneCount, percentage , done, processing}: { tweets:tweetsType , doneCount: number, percentage: number , done: boolean, processing: boolean, count: CountType})=> {
   
   return (<div className={cn("x-twitter-panel hidden", processing && "block")}>
       <div className="x-twitter-header flex-col">
@@ -290,7 +253,8 @@ const DeletionModal = ({ tweets, count ,doneCount, percentage , done, processing
       
    
     <div className="x-twitter-footer">
-      <span className="x-twitter-summary" id="x-twitter-summary"><strong>{count.postsCount}</strong> posts · <strong>{count.repliesCount}</strong> replies · <strong>{count.likesCount}</strong> likes</span>
+      <span className="x-twitter-summary" id="x-twitter-summary">
+        <strong>{count.postsCount}</strong> posts · <strong>{count.repliesCount}</strong> replies · <strong>{count.likesCount}</strong> likes · <strong>{count.repostsCount}</strong> reposts</span>
     </div></div>)
 }
 
@@ -303,14 +267,15 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
   const [processing, setProcessing] = useState(false)   
   const [optionsChecked, setOptionsChecked] = useState<Record<OptionsEnum, boolean>>({
     [OptionsEnum.POSTS]: true,
+    [OptionsEnum.REPOSTS]: false,
     [OptionsEnum.REPLIES]: false,
-    [OptionsEnum.LIKES]: false
+    [OptionsEnum.LIKES]: false,
   })
   const [tweets, setTweets] = useState<tweetsType >({})
-  const [count, setCount] = useState({ likesCount: 0, repliesCount: 0, postsCount: 0, totalCount: 0 })
+  const [count, setCount] = useState<CountType>({ likesCount: 0, repliesCount: 0, postsCount: 0, repostsCount: 0, totalCount: 0 })
   const [done, setDone] = useState(false)
   let rootContainer : HTMLDivElement = document.querySelector(`div[id="x-twitter-root-container"]`)
-   
+
   useEffect(() => {
     rootContainer = document.querySelector(`div[id="x-twitter-root-container"]`)
     if (rootContainer) {
@@ -318,7 +283,7 @@ const PlasmoOverlay: FC<PlasmoCSUIProps> = () => {
     }
   },[display])
 
-  const doneCount = useMemo(()=> count.repliesCount + count.postsCount + count.likesCount ,[count])
+  const doneCount = useMemo(()=> Object.values({...count, totalCount: 0}).reduce((acc,value)=> acc + value,0) ,[count])
   const percentage = useMemo(()=> count.totalCount ? Math.round((doneCount / count.totalCount) * 100) : 0 ,[doneCount, count.totalCount])
    const handleRange = useCallback((value) => {
        switch (value) {
@@ -356,32 +321,41 @@ const handleSubmit : React.FormEventHandler<HTMLFormElement> = useCallback(async
       e.preventDefault();
       if(!Object.values(optionsChecked).reduce((acc, item)=> item || acc, false)) return null
       if (confirmInput.trim().toUpperCase() !== 'DELETE')  return null
+      const  { metaData } =   await sendToBackground({"name": "metadata"})
+
       try {
         
         setConfirmInput("")
-        setProcessing(true)
         setDone(false)
+        setProcessing(true)
         if (date) {
-        //  if (optionsChecked["posts-checkbox"]) {
-        //    deletePosts( date.from.getTime(), date.to.getTime())
-        //   }
-        //   if (optionsChecked["replies-checkbox"]) {
-        //     deleteReplies( date.from.getTime(), date.to.getTime())
-        //   }
+          if (optionsChecked["posts-checkbox"]) {
+           await deletePosts( date.from.getTime(), date.to.getTime(), metaData)
+          }
+          if (optionsChecked["reposts-checkbox"]) {
+           await deleteReposts( date.from.getTime(), date.to.getTime(), metaData)
+          }
+          if (optionsChecked["replies-checkbox"]) {
+            await deleteReplies( date.from.getTime(), date.to.getTime(), metaData)
+          }
           if (optionsChecked["likes-checkbox"]) {
-            await deleteLikes( date.from.getTime(), date.to.getTime())
+            await deleteLikes( date.from.getTime(), date.to.getTime(), metaData)
           }
         }else if(range === "all"){
-          // if (optionsChecked["posts-checkbox"]) {
+          if (optionsChecked["posts-checkbox"]) {
             
-          //   deletePosts( 0 , Date.now())
-          // }
-          // if (optionsChecked["replies-checkbox"]) {
+            await deletePosts( 0 , Date.now(), metaData)
+          }
+          if (optionsChecked["reposts-checkbox"]) {
             
-          //   deleteReplies( 0 , Date.now())
-          // }
+            await deleteReposts( 0 , Date.now(), metaData)
+          }
+          if (optionsChecked["replies-checkbox"]) {
+            
+            await deleteReplies( 0 , Date.now(), metaData)
+          }
           if (optionsChecked["likes-checkbox"]) {    
-            await deleteLikes( 0 , Date.now())
+            await deleteLikes( 0 , Date.now(), metaData)
           }
         }
  
@@ -395,8 +369,9 @@ const handleSubmit : React.FormEventHandler<HTMLFormElement> = useCallback(async
           setCount({
             likesCount: 0,
             repliesCount: 0,
+            repostsCount: 0,
             postsCount: 0,
-            totalCount: 0
+            totalCount: 0,
           })
         },2000)
         
@@ -407,34 +382,80 @@ const handleSubmit : React.FormEventHandler<HTMLFormElement> = useCallback(async
 },[confirmInput,optionsChecked, date, range, tweets])
 /// Check at least one option
 
-  // const total = items.length;
-  //   const pct = total ? Math.round((doneCount / total) * 100) : 0;
-  //   fillEl.style.width = pct + '%';
-  //   doneEl.textContent = doneCount;
-  //   totalEl.textContent = total;
-
 const canUnCheck = useCallback((id) => Object.values({...optionsChecked,[id] : !optionsChecked[id]}).reduce((acc, item)=> item || acc, false),[optionsChecked]) 
-const deleteLikes = useCallback(async (startTimestamp: number, endTimestamp: number)=>{
+const deleteLikes = useCallback(async (startTimestamp: number, endTimestamp: number, metaData: metaDataInterface)=>{
    //OperationName.LIKES
-     
 
          try { 
               let  loop = true
                while(loop){
-                 const {items}  =  await getLikes({queryId: getQueryId(OperationName.LIKES)})
-                 console.log(items)
+                  const {items}  =  await getLikes({queryId: getQueryId(OperationName.LIKES)})
                    if (items.length === 0) break;
                    let newItems = {}
                     let index = 0
                     items.forEach((item) => {
-                        const parsedItem = getParsedItem(item)
-                        console.log({parsedItem})
+                        const parsedItem = getParsedItem(item, metaData)
                         if(!!parsedItem){
                           newItems[index] = parsedItem
                           index++
                         }
                     }) 
-                    console.log({newItems})
+
+                  setTweets(newItems)
+                  setCount((count) => ({...count, totalCount : count.totalCount + Object.keys(newItems).length }))
+               
+                   for (let i = 0; i < Object.keys(newItems).length ; i++) {
+                    const timeStamp = newItems[i].created_at.getTime()
+
+                    if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
+                      const tweetId = newItems[i].id
+                   
+                      newItems = {...newItems,[i]: {...newItems[i], state: "active"}}
+                      setTweets(newItems)
+
+                      const {data} = await unfavoriteTweet({ queryId : getQueryId(OperationName.UNFAVORITE_TWEET), tweetId })
+                      if (data?.unfavorite_tweet === "Done") {
+                        newItems = {...newItems,[i]: {...newItems[i], state: "deleted"}}
+                        setTweets(newItems)
+                        setCount((count)=>  ({...count, likesCount : count.likesCount + 1}))       
+                      } 
+
+                     }else if(timeStamp < startTimestamp ){
+                       loop = false
+                       break;
+                     }
+                    }
+                    await Sleep(1)
+              }
+              return null
+        } catch (error) {
+          console.log(error)
+        }   
+
+}
+,[]) 
+
+
+const deletePosts = useCallback(async(startTimestamp: number, endTimestamp: number, metaData: metaDataInterface)=>{
+        // OperationName.USER_TWEETS
+
+       try { 
+              let  loop = true
+               while(loop){
+                 const {items}  =  await getUserTweets({queryId: getQueryId(OperationName.USER_TWEETS)})
+                
+                   if (items.length === 0) break;
+                   let newItems = {}
+                    let index = 0
+                    items.forEach((item) => {
+                        const parsedItem = getParsedItem(item, metaData)
+                        
+                        if(!!parsedItem){
+                          newItems[index] = parsedItem
+                          index++
+                        }
+                    }) 
+                    
                   setTweets(newItems)
                   setCount((count) => ({...count, totalCount : count.totalCount + Object.keys(newItems).length }))
 
@@ -446,23 +467,76 @@ const deleteLikes = useCallback(async (startTimestamp: number, endTimestamp: num
                      
                    
                       newItems = {...newItems,[i]: {...newItems[i], state: "active"}}
-                     setTweets(newItems)
-
-                      const {data} = await unfavoriteTweet({ queryId : getQueryId(OperationName.UNFAVORITE_TWEET), tweetId })
-                        if (data?.unfavorite_tweet === "Done") {
-
-                      newItems = {...newItems,[i]: {...newItems[i], state: "deleted"}}
                       setTweets(newItems)
-                      setCount((count)=>  ({...count, likesCount : count.likesCount + 1}))       
-                                 }  
 
+                      const {data} = await deleteTweet({ queryId : getQueryId(OperationName.DELETE_TWEET), tweetId })
+                      if (!!data?.delete_tweet) {
+                        newItems = {...newItems,[i]: {...newItems[i], state: "deleted"}}
+                        setTweets(newItems)
+                        setCount((count)=>  ({...count, postsCount : count.postsCount + 1}))       
+                      }  
+            
                      }else if(timeStamp < startTimestamp ){
-                       loop = true
+                       loop = false
                        break;
                      }
-                     await Sleep(1)
+                    }
+                    await Sleep(1)
 
-                   }
+              }
+              return null
+        } catch (error) {
+          console.log(error)
+        }     
+ 
+}, []
+)
+
+const deleteReposts = useCallback(async(startTimestamp: number, endTimestamp: number, metaData: metaDataInterface)=>{
+      // OperationName.USER_TWEETS_AND_REPLIES
+  try { 
+              let  loop = true
+               while(loop){
+                 const {items}  =  await getUserTweetsAndReplays({queryId: getQueryId(OperationName.USER_TWEETS_AND_REPLIES)})
+                 
+                   if (items.length === 0) break;
+                   let newItems = {}
+                    let index = 0
+                    items.forEach((item) => {
+                        const parsedItem = getParsedItem(item, metaData)
+                       
+                        if(!!parsedItem &&  parsedItem.retweeted){
+                          newItems[index] = parsedItem
+                          index++
+                        }
+                    }) 
+              
+                  setTweets(newItems)
+                  setCount((count) => ({...count, totalCount : count.totalCount + Object.keys(newItems).length }))
+
+                   for (let i = 0; i < Object.keys(newItems).length ; i++) {
+                    const timeStamp = newItems[i].created_at.getTime()
+
+                    if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
+                      const tweetId = newItems[i].id
+                     
+                   
+                      newItems = {...newItems,[i]: {...newItems[i], state: "active"}}
+                      setTweets(newItems)
+
+                      const {data} = await deleteRetweet({ queryId : getQueryId(OperationName.DELETE_RETWEET), sourceTweetId: tweetId })
+                      if (!!data?.unretweet) {
+                        newItems = {...newItems,[i]: {...newItems[i], state: "deleted"}}
+                        setTweets(newItems)
+                        setCount((count)=>  ({...count, respostsCount  : count.repostsCount + 1}))       
+                      }  
+     
+                     }else if(timeStamp < startTimestamp ){
+                       loop = false
+                       break;
+                     }
+                    }
+                    await Sleep(1)
               }
               return null
         } catch (error) {
@@ -470,23 +544,77 @@ const deleteLikes = useCallback(async (startTimestamp: number, endTimestamp: num
         }   
 
 }
-,[]) 
+,[])
+
+const deleteReplies = useCallback(async (startTimestamp: number, endTimestamp: number, metaData: metaDataInterface) => {
+      // OperationName.USER_TWEETS_AND_REPLIES
+ try { 
+              let  loop = true
+               while(loop){
+                 const {items}  =  await getUserTweetsAndReplays({queryId: getQueryId(OperationName.USER_TWEETS_AND_REPLIES)})
+                   if (items.length === 0) break;
+                   let newItems = {}
+                    let index = 0
+                    items.forEach((item) => {
+                        const parsedItem = getParsedItem(item, metaData)
+                        
+                        if(!!parsedItem && parsedItem.is_my_reply){
+                          newItems[index] = parsedItem
+                          index++
+                        }
+                    }) 
+                
+                  setTweets(newItems)
+                  setCount((count) => ({...count, totalCount : count.totalCount + Object.keys(newItems).length }))
+
+                   for (let i = 0; i < Object.keys(newItems).length ; i++) {
+                    const timeStamp = newItems[i].created_at.getTime()
+
+                    if (startTimestamp <= timeStamp && timeStamp <= endTimestamp){
+                      const tweetId = newItems[i].id
+                     
+                   
+                      newItems = {...newItems,[i]: {...newItems[i], state: "active"}}
+                      setTweets(newItems)
+
+                      const {data} = await deleteTweet({ queryId : getQueryId(OperationName.DELETE_TWEET), tweetId: tweetId })
+                      if(!!data?.delete_tweet) {
+                        newItems = {...newItems,[i]: {...newItems[i], state: "deleted"}}
+                        setTweets(newItems)
+                        setCount((count)=>  ({...count, repliesCount  : count.repliesCount + 1}))       
+                      }  
+          
+                     }else if(timeStamp < startTimestamp ){
+                       loop = false
+                       break;
+                     }
+                   }
+                     await Sleep(1)
+
+              }
+              return null
+        } catch (error) {
+          console.log(error)
+        }   
+
+},[]) 
+
       return (<div className="font-custom" id="x-twitter-overlay-root" role="dialog" aria-modal="true" aria-labelledby="x-twitter-title">
         <div className="x-twitter-backdrop"></div>
          <BulkActionModal 
-        canUnCheck={canUnCheck}
-        setOptionsChecked={setOptionsChecked}
-        optionsChecked={optionsChecked}
-        setRange={setRange}
-        range={range}
-        date={date}
-        setDate={setDate}
-        handleRange={handleRange}
-        rangeValues={rangeValues}
-        handleSubmit={handleSubmit}
-        setConfirmInput={setConfirmInput}
-        confirmInput={confirmInput}
-        processing={processing}
+          canUnCheck={canUnCheck}
+          setOptionsChecked={setOptionsChecked}
+          optionsChecked={optionsChecked}
+          setRange={setRange}
+          range={range}
+          date={date}
+          setDate={setDate}
+          handleRange={handleRange}
+          rangeValues={rangeValues}
+          handleSubmit={handleSubmit}
+          setConfirmInput={setConfirmInput}
+          confirmInput={confirmInput}
+          processing={processing}
        /> 
         <DeletionModal 
           tweets ={tweets}

@@ -1,34 +1,104 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# My Plasmo Extension
 
-## Getting Started
+**Version:** 1.0.0
 
-First, run the development server:
+A browser extension built with [Plasmo](https://www.plasmo.com/) and styled using [shadcn/ui](https://ui.shadcn.com/) + Tailwind CSS.
 
-```bash
-pnpm dev
-# or
-npm run dev
-```
+> 💛 **Support Notice:** If you find this project useful, please support my work with a paid [GitHub Sponsors](https://github.com/sponsors/soukaynaben)subscription before using it — for both personal and business use. See the [License](#-license) section below for details.
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+## ✨ Features
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+- ⚡️ Built with Plasmo framework
+- 🎨 Styled with shadcn/ui components
+- 🌗 Light/Dark mode support
+- 🧩 Popup, Options page, and Content Script support
+- 🔒 Type-safe with TypeScript
 
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+## 📦 Tech Stack
 
-## Making production build
+- **Framework:** [Plasmo](https://docs.plasmo.com/)
+- **UI Components:** [shadcn/ui](https://ui.shadcn.com/)
+- **Styling:** Tailwind CSS
+- **Language:** TypeScript
 
-Run the following:
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or higher)
+- pnpm / npm / yarn
+
+### Installation
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/soukaynaben/x-twitter-pal.git
+   cd x-twitter-pal
+   ```
+
+2. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+
+3. Run the development server:
+   ```bash
+   pnpm dev
+   ```
+
+4. Load the extension in your browser:
+   - Open `chrome://extensions`
+   - Enable **Developer mode**
+   - Click **Load unpacked**
+   - Select the `build/chrome-mv3-dev` folder
+
+## 🏗️ Building for Production
 
 ```bash
 pnpm build
-# or
-npm run build
 ```
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+This creates a production-ready build in `build/chrome-mv3-prod`, which you can zip and submit to the Chrome Web Store.
 
-## Submit to the webstores
+## 📁 Project Structure
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
-# x-twitter-pal
+```
+├── popup.tsx              # Extension popup UI
+├── contents/               # Content scripts
+├── background.ts           # Background service worker
+├── components/
+│   └── ui/                 # shadcn/ui components
+├── lib/
+│   └── utils.ts            # Utility functions (cn helper, etc.)
+├── globals.css             # Tailwind + shadcn theme variables
+├── tailwind.config.js
+└── package.json
+```
+
+## 🎨 Adding shadcn/ui Components
+
+```bash
+pnpm dlx shadcn@latest add button
+```
+
+> Note: Component paths may need adjusting since Plasmo's folder structure differs from Next.js.
+
+## 🧪 Testing
+
+```bash
+pnpm test
+```
+
+## 📄 License
+
+If you find this project useful, please support my work by subscribing via [GitHub Sponsors](https://github.com/sponsors/soukaynaben) before using it.
+
+- 💛 Sponsorship is requested for both personal and business use.
+- 📧 Contact the author for enterprise/team licensing options.
+
+See the [LICENSE](LICENSE) file for full terms.
+
+## 🙏 Acknowledgments
+
+- [Plasmo](https://www.plasmo.com/)
+- [shadcn/ui](https://ui.shadcn.com/)
