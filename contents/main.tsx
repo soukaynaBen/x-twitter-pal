@@ -455,7 +455,7 @@ const deletePosts = useCallback(async(startTimestamp: number, endTimestamp: numb
                     items.forEach((item) => {
                         const parsedItem = getParsedItem(item, metaData)
                         
-                        if(!!parsedItem){
+                        if(!!parsedItem && !parsedItem.retweeted){
                           newItems[index] = parsedItem
                           index++
                         }
